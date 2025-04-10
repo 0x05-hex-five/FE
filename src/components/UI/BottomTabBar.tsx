@@ -9,7 +9,6 @@ const Container = styled.View`
   left: 0;
   right: 0;
   z-index: 10;
-
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
@@ -33,7 +32,23 @@ const BottomTabBar = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const current = route.name;
+  const getCurrentTab = () => {
+    switch (route.name) {
+      case 'HomeScreen':
+        return '홈';
+      case 'PillScreen':
+      case 'PillDetailScreen': 
+        return '약품정보';
+      case 'ProfileScreen':
+        return '내정보';
+      case 'SettingsScreen':
+        return '설정';
+      default:
+        return '';
+    }
+  };
+
+  const current = getCurrentTab();
 
   return (
     <Container>
@@ -41,36 +56,36 @@ const BottomTabBar = () => {
         <Ionicons
           name="home-outline"
           size={20}
-          color={current === 'HomeScreen' ? '#3182ce' : '#9ca3af'}
+          color={current === '홈' ? '#3182ce' : '#9ca3af'}
         />
-        <Label active={current === 'HomeScreen'}>홈</Label>
+        <Label active={current === '홈'}>홈</Label>
       </TabButton>
 
       <TabButton onPress={() => navigation.navigate('PillScreen' as never)}>
         <Ionicons
           name="medkit-outline"
           size={20}
-          color={current === 'PillScreen' ? '#3182ce' : '#9ca3af'}
+          color={current === '약품정보' ? '#3182ce' : '#9ca3af'}
         />
-        <Label active={current === 'PillScreen'}>약품정보</Label>
+        <Label active={current === '약품정보'}>약품정보</Label>
       </TabButton>
 
       <TabButton onPress={() => navigation.navigate('ProfileScreen' as never)}>
         <Ionicons
           name="person-outline"
           size={20}
-          color={current === 'ProfileScreen' ? '#3182ce' : '#9ca3af'}
+          color={current === '내정보' ? '#3182ce' : '#9ca3af'}
         />
-        <Label active={current === 'ProfileScreen'}>내정보</Label>
+        <Label active={current === '내정보'}>내정보</Label>
       </TabButton>
 
       <TabButton onPress={() => navigation.navigate('SettingsScreen' as never)}>
         <Ionicons
           name="settings-outline"
           size={20}
-          color={current === 'SettingsScreen' ? '#3182ce' : '#9ca3af'}
+          color={current === '설정' ? '#3182ce' : '#9ca3af'}
         />
-        <Label active={current === 'SettingsScreen'}>설정</Label>
+        <Label active={current === '설정'}>설정</Label>
       </TabButton>
     </Container>
   );

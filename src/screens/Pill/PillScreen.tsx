@@ -17,7 +17,7 @@ const PillScreen = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('전체');
   const navigation = useNavigation();
-  
+
   const dummyPills = [
     { name: '타이레놀 500mg', category: '진통제 / 해열제', type: '일반' },
     { name: '게보린', category: '진통제', type: '일반' },
@@ -40,7 +40,7 @@ const PillScreen = () => {
             name={pill.name}
             category={pill.category}
             type={pill.type}
-            onPressDetail={() => {}}
+            onPressDetail={() => navigation.navigate('PillDetailScreen' as never)}
           />
         ))}
       </Container>
