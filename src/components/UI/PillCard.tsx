@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 
 interface PillCardProps {
   name: string;
@@ -39,6 +40,8 @@ const DetailLink = styled.Text`
   margin-top: 4px;
 `;
 
+const navigation = useNavigation();
+
 const PillCard = ({ name, category, type, onPressDetail }: PillCardProps) => {
   return (
     <Card>
@@ -46,7 +49,9 @@ const PillCard = ({ name, category, type, onPressDetail }: PillCardProps) => {
       <PillInfo>
         <PillName>{name}</PillName>
         <PillMeta>{category} / {type}</PillMeta>
-        <DetailLink onPress={onPressDetail}>상세정보 보기 &gt;</DetailLink>
+        <DetailLink onPress={() => navigation.navigate('PillDetailScreen' as never)}>
+  상세정보 보기 &gt;
+</DetailLink>
       </PillInfo>
       <Ionicons name="bookmark-outline" size={20} color="#60a5fa" />
     </Card>
