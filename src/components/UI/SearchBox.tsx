@@ -4,37 +4,47 @@ import React from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-interface Props {
-  placeholder?: string;
-  value: string;
-  onChangeText: (text: string) => void;
-}
-
 const Container = styled.View`
   flex-direction: row;
   align-items: center;
-  padding: 4px 18px;
-  background-color:rgb(240, 242, 246);
-  border-radius: 10px;
+  background-color: #f3f4f6;
+  border-radius: 12px;
+  padding: 10px 12px;
   margin-bottom: 12px;
 `;
 
 const Input = styled.TextInput`
   flex: 1;
-  font-size: 16px;
-  color: #111827;
+  font-size: 14px;
+  color: #1f2937;
 `;
 
-const SearchBox = ({ placeholder = '의약품명을 입력하세요', value, onChangeText }: Props) => {
+const IconButton = styled.TouchableOpacity`
+  padding-left: 8px;
+`;
+
+interface SearchBoxProps {
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  onCameraPress?: () => void; // <- 카메라 버튼 눌렀을 때
+}
+
+const SearchBox = ({ placeholder, value, onChangeText, onCameraPress }: SearchBoxProps) => {
   return (
     <Container>
-      <Ionicons name="search-outline" size={20} color="#6b7280" style={{ marginRight: 8 }} />
+      <Ionicons name="search" size={18} color="#9ca3af" />
       <Input
         placeholder={placeholder}
         placeholderTextColor="#9ca3af"
         value={value}
         onChangeText={onChangeText}
       />
+      {onCameraPress && (
+        <IconButton onPress={onCameraPress}>
+          <Ionicons name="camera-outline" size={20} color="#9ca3af" />
+        </IconButton>
+      )}
     </Container>
   );
 };
