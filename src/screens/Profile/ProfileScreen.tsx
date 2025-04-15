@@ -3,7 +3,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 
@@ -18,10 +17,6 @@ const Header = styled.View`
   flex-direction: row;
   align-items: center;
   margin-bottom: 24px;
-`;
-
-const BackButton = styled(TouchableOpacity)`
-  margin-right: 12px;
 `;
 
 const Title = styled.Text`
@@ -104,9 +99,6 @@ const ProfileScreen = () => {
   return (
     <Container>
       <Header>
-        <BackButton onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#1f2937" />
-        </BackButton>
         <Title>내 정보</Title>
       </Header>
 

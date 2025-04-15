@@ -8,6 +8,9 @@ import ProfileScreen from "./screens/Profile/ProfileScreen";
 import BasicInfoScreen from './screens/Profile/BasicInfoScreen';
 import FavoritesScreen from './screens/Profile/FavoritesScreen';
 import AlarmScreen from './screens/Profile/AlarmScreen';
+import SettingsScreen from './screens/Setting/SettingsScreen';
+import PasswordScreen from './screens/Setting/PasswordScreen';
+import PrivacyScreen from './screens/Setting/PrivacyScreen';
 
 // 👉 추가할 스크린들 (임시 컴포넌트라도 생성 필요)
 import CameraScreen from './screens/CameraScreen';
@@ -30,6 +33,9 @@ const App = () => {
         <Stack.Screen name="CombinationScreen" component={CombinationScreen} />
         <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
         <Stack.Screen name="AlarmScreen" component={AlarmScreen} />
+        <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+        <Stack.Screen name="PasswordScreen" component={PasswordScreen} />
+        <Stack.Screen name="PrivacyScreen" component={PrivacyScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
