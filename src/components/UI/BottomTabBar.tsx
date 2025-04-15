@@ -40,6 +40,7 @@ const BottomTabBar = () => {
       case 'PillDetailScreen': 
         return '약품정보';
       case 'ProfileScreen':
+      case 'BasicInfoScreen':
         return '내정보';
       case 'SettingsScreen':
         return '설정';
