@@ -134,7 +134,7 @@ const ProfileScreen = () => {
         <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
       </Card>
 
-      <Card>
+      <Card onPress={() => navigation.navigate('FavoritesScreen' as never)}>
         <CardLeft>
           <CardIcon>
             <Ionicons name="bookmark-outline" size={20} color="#3182ce" />

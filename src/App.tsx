@@ -6,12 +6,12 @@ import PillScreen from './screens/Pill/PillScreen';
 import PillDetailScreen from "./screens/Pill/PillDetailScreen";
 import ProfileScreen from "./screens/Profile/ProfileScreen";
 import BasicInfoScreen from './screens/Profile/BasicInfoScreen';
+import FavoritesScreen from './screens/Profile/FavoritesScreen';
 
 
 // 👉 추가할 스크린들 (임시 컴포넌트라도 생성 필요)
 import CameraScreen from './screens/CameraScreen';
 import CombinationScreen from './screens/ComninationScreen';
-import FavoritesScreen from './screens/FavoritesScreen';
 
 const Stack = createNativeStackNavigator();
 
