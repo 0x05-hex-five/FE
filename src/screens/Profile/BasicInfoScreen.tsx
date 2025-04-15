@@ -74,25 +74,6 @@ const Input = styled.TextInput`
   margin-top: 6px;
 `;
 
-const CheckboxGroup = styled.View`
-  margin-top: 8px;
-`;
-
-const CheckboxItem = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 8px;
-`;
-
-const CheckboxBox = styled.View<{ checked: boolean }>`
-  width: 18px;
-  height: 18px;
-  border-width: 1.5px;
-  border-color: #9ca3af;
-  background-color: ${({ checked }) => (checked ? '#3182ce' : 'transparent')};
-  margin-right: 8px;
-`;
-
 const SaveButton = styled.TouchableOpacity`
   background-color: #3182ce;
   padding: 14px;
@@ -113,14 +94,6 @@ const BasicInfoScreen = () => {
   const [gender, setGender] = useState<'여성' | '남성'>('여성');
   const [age, setAge] = useState('35');
   const [pregnant, setPregnant] = useState<'있음' | '없음'>('없음');
-  const [conditions, setConditions] = useState<string[]>([]);
-  const [allergy, setAllergy] = useState('');
-
-  const toggleCondition = (item: string) => {
-    setConditions(prev =>
-      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
-    );
-  };
 
   const handleSave = () => {
     Alert.alert('저장됨', `성별: ${gender}, 나이: ${age}, 임신: ${pregnant}`);
@@ -166,24 +139,6 @@ const BasicInfoScreen = () => {
             <ValueText>있음</ValueText>
           </RadioOption>
         </RadioGroup>
-
-        <Label>기저질환</Label>
-        <CheckboxGroup>
-          {['고혈압', '당뇨', '심장질환'].map(item => (
-            <CheckboxItem key={item} onPress={() => toggleCondition(item)}>
-              <CheckboxBox checked={conditions.includes(item)} />
-              <ValueText>{item}</ValueText>
-            </CheckboxItem>
-          ))}
-        </CheckboxGroup>
-
-        <Label>알레르기</Label>
-        <Input
-          placeholder="알레르기가 있다면 입력해주세요"
-          placeholderTextColor="#9ca3af"
-          value={allergy}
-          onChangeText={setAllergy}
-        />
 
         <SaveButton onPress={handleSave}>
           <SaveText>저장하기</SaveText>
