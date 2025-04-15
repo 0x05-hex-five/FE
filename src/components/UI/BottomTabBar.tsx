@@ -45,6 +45,8 @@ const BottomTabBar = () => {
       case 'AlarmScreen':
         return '내정보';
       case 'SettingsScreen':
+      case 'PasswordScreen':
+      case 'PrivacyScreen': 
         return '설정';
       default:
         return '';
