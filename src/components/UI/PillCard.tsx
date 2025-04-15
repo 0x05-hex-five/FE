@@ -40,9 +40,9 @@ const DetailLink = styled.Text`
   margin-top: 4px;
 `;
 
-const navigation = useNavigation();
-
 const PillCard = ({ name, category, type, onPressDetail }: PillCardProps) => {
+  const navigation = useNavigation();
+
   return (
     <Card>
       <Ionicons name="image" size={40} color="#d1d5db" style={{ marginRight: 12 }} />
