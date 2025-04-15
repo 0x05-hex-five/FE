@@ -42,6 +42,7 @@ const BottomTabBar = () => {
       case 'ProfileScreen':
       case 'BasicInfoScreen':
       case 'FavoritesScreen':
+      case 'AlarmScreen':
         return '내정보';
       case 'SettingsScreen':
         return '설정';
