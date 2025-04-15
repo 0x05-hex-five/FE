@@ -121,7 +121,7 @@ const ProfileScreen = () => {
         </Info>
       </ProfileRow>
 
-      <Card>
+      <Card onPress={() => navigation.navigate('BasicInfoScreen' as never)}>
         <CardLeft>
           <CardIcon>
             <Ionicons name="information-circle-outline" size={20} color="#3182ce" />
