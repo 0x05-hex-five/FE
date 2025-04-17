@@ -125,7 +125,9 @@ const HomeScreen = () => {
 
           <CategoryRow>
             {categories.map((cat, index) => (
-              <CategoryButton key={index}>
+              <CategoryButton 
+                key={index}
+                onPress={() => navigation.navigate('KeywordPillScreen' as never, { initialKeyword: cat } as never)}>
                 <CategoryText>{cat}</CategoryText>
               </CategoryButton>
             ))}
