@@ -8,10 +8,11 @@ interface PillCardProps {
   category: string;
   type: string;
   onPressDetail: () => void;
+  isSelected?: boolean; 
 }
 
-const Card = styled.View`
-  background-color: #f9fbfc;
+const Card = styled.TouchableOpacity<{ selected?: boolean }>`
+  background-color: ${({ selected }) => (selected ? '#e0f2fe' : '#f9fbfc')};
   border-radius: 12px;
   padding: 12px 16px;
   margin-bottom: 12px;
@@ -40,12 +41,27 @@ const DetailLink = styled.Text`
   margin-top: 4px;
 `;
 
-const PillCard = ({ name, category, type, onPressDetail }: PillCardProps) => {
+const PillCard = ({
+  name,
+  category,
+  type,
+  onPressDetail,
+  isSelected = false,
+}: PillCardProps) => {
   const navigation = useNavigation();
 
   return (
-    <Card>
-      <Ionicons name="image" size={40} color="#d1d5db" style={{ marginRight: 12 }} />
+    <Card
+    activeOpacity={0.8}
+    selected={isSelected}
+    onPress={onPressDetail} 
+    >
+    <Ionicons
+      name="image"
+      size={40}
+      color="#d1d5db"
+      style={{ marginRight: 12 }}
+    />
       <PillInfo>
         <PillName>{name}</PillName>
         <PillMeta>{category} / {type}</PillMeta>

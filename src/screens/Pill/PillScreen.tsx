@@ -5,6 +5,7 @@ import BottomTabBar from '../../components/UI/BottomTabBar';
 import PillFilter from '../../components/UI/PillFilter';
 import PillCard from '../../components/UI/PillCard';
 import { useNavigation } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 
 const Container = styled.View`
   flex: 1;
@@ -17,6 +18,8 @@ const PillScreen = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('전체');
   const navigation = useNavigation();
+  const route = useRoute();
+  const onSelect = (route.params as any)?.onSelect;
 
   const dummyPills = [
     { name: '타이레놀 500mg', category: '진통제 / 해열제', type: '일반' },
@@ -40,7 +43,14 @@ const PillScreen = () => {
             name={pill.name}
             category={pill.category}
             type={pill.type}
-            onPressDetail={() => navigation.navigate('PillDetailScreen' as never)}
+            onPressDetail={() => {
+              if (onSelect) {
+                onSelect(pill.name);         
+                navigation.goBack();       
+              } else {
+                navigation.navigate('PillDetailScreen' as never);
+              }
+            }}
           />
         ))}
       </Container>
