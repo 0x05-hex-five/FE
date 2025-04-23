@@ -15,17 +15,17 @@ import KeywordPillScreen from './screens/Pill/KeywordPillScreen';
 import SimilarPillScreen from './screens/Pill/SimilarPillScreen';
 import ResultScreen from './screens/Combination/ResultScreen';
 import LoadingScreen from './screens/Combination/LoadingScreen';
-
-// 👉 추가할 스크린들 (임시 컴포넌트라도 생성 필요)
 import CameraScreen from './screens/CameraScreen';
 import CombinationScreen from './screens/Combination/ComninationScreen';
+import LoginScreen from './screens/Auth/LoginScreen';
 
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="HomeScreen" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="LoginScreen" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="HomeScreen" component={HomeScreen} />
         <Stack.Screen name="PillScreen" component={PillScreen} />
         <Stack.Screen name="PillDetailScreen" component={PillDetailScreen} />
