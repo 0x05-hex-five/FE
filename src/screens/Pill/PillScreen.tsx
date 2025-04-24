@@ -1,84 +1,102 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
 import SearchBox from '../../components/UI/SearchBox';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import PillFilter from '../../components/UI/PillFilter';
 import PillCard from '../../components/UI/PillCard';
-import { useNavigation } from '@react-navigation/native';
-import { useRoute } from '@react-navigation/native';
-// import axios from 'axios'; 
+import { FlatList } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { searchPills } from '../../api/pill';
 
 const Container = styled.View`
   flex: 1;
   background-color: #ffffff;
   padding: 24px 16px;
-  padding-bottom: 80px; // 하단탭 가리지 않게
 `;
 
-const dummyPills = [
-  { name: '타이레놀 500mg', category: '진통제 / 해열제', type: '일반' },
-  { name: '게보린', category: '진통제', type: '일반' },
-  { name: '판콜에이내복액', category: '감기약', type: '일반' },
-];
+type Pill = {
+  id: number;
+  name: string;
+  type: string;
+  className: string;
+  image?: string | null;
+};
 
 const PillScreen = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('전체');
-  const [pills, setPills] = useState(dummyPills);
+  const [pills, setPills] = useState<Pill[]>([]);
   const navigation = useNavigation();
   const route = useRoute();
   const onSelect = (route.params as any)?.onSelect;
 
-    // 실제 API 호출
-  /*
+  const typeParam =
+  filter === '전체' ? 'ALL' :
+  filter === '일반약' ? 'OTC' :
+  filter === '처방약' ? 'ETC' :
+  'ALL';
+
   useEffect(() => {
     const fetchPills = async () => {
       try {
-        const res = await axios.get('http://localhost:8080/api/medicines', {
-          params: {
-            name: search,
-            type: filter === '전체' ? 'ALL' : 'OTC', // 필요 시 ETC 분기
-          },
-        });
-        setPills(res.data.data);
+        const result = await searchPills(search, typeParam);
+        setPills(result);
       } catch (err) {
-        console.error(err);
+        console.error('의약품 검색 실패:', err);
       }
     };
-    if (search) fetchPills();
+
+    fetchPills();
   }, [search, filter]);
-  */
 
   return (
     <>
       <Container>
         <SearchBox 
-            placeholder="의약품명을 입력하세요" 
-            value={search} 
-            onChangeText={setSearch} 
-            onCameraPress={() => navigation.navigate('CameraScreen' as never)}
+          placeholder="의약품명을 입력하세요" 
+          value={search} 
+          onChangeText={setSearch} 
+          onCameraPress={() => navigation.navigate('CameraScreen' as never)}
         />
         <PillFilter selected={filter} onSelect={setFilter} />
-        {pills.map((pill, index) => (
-          <PillCard
-            key={index}
-            name={pill.name}
-            category={pill.category}
-            type={pill.type}
-            onPressDetail={() => {
-              if (onSelect) {
-                onSelect(pill.name);         
-                navigation.goBack();       
-              } else {
-                navigation.navigate('PillDetailScreen' as never);
-              }
-            }}
-          />
-        ))}
+
+        <FlatList
+          data={pills}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <PillCard
+              id={item.id}
+              name={item.name}
+              className={item.className}
+              type={item.type}
+              image={item.image}
+              onPressDetail={() => {
+                if (onSelect) {
+                  onSelect(item.name);
+                  navigation.goBack();
+                } else {
+                  navigation.navigate('PillDetailScreen', { id: item.id });
+                }
+              }}
+            />
+          )}
+          ListEmptyComponent={
+            <EmptyText>
+              검색 결과가 없습니다.
+            </EmptyText>
+          }
+        />
       </Container>
       <BottomTabBar />
     </>
   );
 };
+
+const EmptyText = styled.Text`
+  text-align: center;
+  padding: 40px 0;
+  font-size: 14px;
+  color: #9ca3af;
+`;
 
 export default PillScreen;
