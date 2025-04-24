@@ -12,7 +12,12 @@ import { saveSearchKeyword } from '../../utils/recentSearch';
 const Container = styled.View`
   flex: 1;
   background-color: #ffffff;
-  padding: 24px 16px;
+  padding: 8px 12px;
+`;
+
+const Spacer = styled.View`
+  height: 60px;
+  background-color: transparent;
 `;
 
 type Pill = {
@@ -24,12 +29,13 @@ type Pill = {
 };
 
 const PillScreen = () => {
-  const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('전체');
   const [pills, setPills] = useState<Pill[]>([]);
   const navigation = useNavigation();
   const route = useRoute();
   const onSelect = (route.params as any)?.onSelect;
+  const initialKeyword = (route.params as any)?.initialKeyword || '';
+  const [search, setSearch] = useState(initialKeyword);
 
   const typeParam =
   filter === '전체' ? 'ALL' :
@@ -89,6 +95,7 @@ const PillScreen = () => {
           }
         />
       </Container>
+      <Spacer /> 
       <BottomTabBar />
     </>
   );

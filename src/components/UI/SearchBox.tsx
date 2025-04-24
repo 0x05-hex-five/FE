@@ -27,10 +27,11 @@ interface SearchBoxProps {
   placeholder: string;
   value: string;
   onChangeText: (text: string) => void;
-  onCameraPress?: () => void; // <- 카메라 버튼 눌렀을 때
+  onCameraPress?: () => void; 
+  onSubmitEditing?: () => void;
 }
 
-const SearchBox = ({ placeholder, value, onChangeText, onCameraPress }: SearchBoxProps) => {
+const SearchBox = ({ placeholder, value, onChangeText, onCameraPress, onSubmitEditing, }: SearchBoxProps) => {
   return (
     <Container>
       <Ionicons name="search" size={18} color="#9ca3af" />
@@ -39,6 +40,7 @@ const SearchBox = ({ placeholder, value, onChangeText, onCameraPress }: SearchBo
         placeholderTextColor="#9ca3af"
         value={value}
         onChangeText={onChangeText}
+        onSubmitEditing={onSubmitEditing} 
       />
       {onCameraPress && (
         <IconButton onPress={onCameraPress}>

@@ -13,8 +13,6 @@ import BottomTabBar from '../../components/UI/BottomTabBar';
 import { getSearchKeywords } from '../../utils/recentSearch';
 import { removeSearchKeyword } from '../../utils/recentSearch';
 
-
-// 메인 컨텐츠 영역
 const Container = styled.View`
   flex: 1;
   padding: 24px 16px;
@@ -129,11 +127,18 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Container>
-          <SearchBox
-            placeholder="의약품명을 입력하세요"
-            value={search}
-            onChangeText={setSearch}
-          />
+        <SearchBox
+  placeholder="의약품명을 입력하세요"
+  value={search}
+  onChangeText={setSearch}
+  onSubmitEditing={() => {
+    if (search.trim()) {
+      navigation.navigate('PillScreen' as never, {
+        initialKeyword: search.trim(),
+      } as never);
+    }
+  }}
+/>
 
           <CategoryRow>
             {categories.map((cat, index) => (
