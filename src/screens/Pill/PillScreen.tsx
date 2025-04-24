@@ -7,6 +7,7 @@ import PillCard from '../../components/UI/PillCard';
 import { FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { searchPills } from '../../api/pill';
+import { saveSearchKeyword } from '../../utils/recentSearch';
 
 const Container = styled.View`
   flex: 1;
@@ -75,6 +76,7 @@ const PillScreen = () => {
                   onSelect(item.name);
                   navigation.goBack();
                 } else {
+                  saveSearchKeyword(item.name);
                   navigation.navigate('PillDetailScreen', { id: item.id });
                 }
               }}
