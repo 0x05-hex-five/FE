@@ -32,7 +32,6 @@ const App = () => {
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
         <Stack.Screen name="BasicInfoScreen" component={BasicInfoScreen} />
 
-        {/* ✅ 추가된 스크린들 */}
         <Stack.Screen name="CameraScreen" component={CameraScreen} />
         <Stack.Screen name="CombinationScreen" component={CombinationScreen} />
         <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
