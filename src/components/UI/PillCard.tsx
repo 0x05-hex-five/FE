@@ -1,18 +1,19 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { Image } from 'react-native';
 
 interface PillCardProps {
+  id: number;
   name: string;
-  category: string;
   type: string;
+  className: string; 
+  image?: string | null;
   onPressDetail: () => void;
-  isSelected?: boolean; 
 }
 
-const Card = styled.TouchableOpacity<{ selected?: boolean }>`
-  background-color: ${({ selected }) => (selected ? '#e0f2fe' : '#f9fbfc')};
+const Card = styled.TouchableOpacity`
+  background-color: #f9fbfc;
   border-radius: 12px;
   padding: 12px 16px;
   margin-bottom: 12px;
@@ -35,41 +36,33 @@ const PillMeta = styled.Text`
   color: #6b7280;
 `;
 
-const DetailLink = styled.Text`
-  font-size: 12px;
-  color: #3182ce;
-  margin-top: 4px;
-`;
-
 const PillCard = ({
   name,
-  category,
+  className,
   type,
+  image,
   onPressDetail,
-  isSelected = false,
 }: PillCardProps) => {
-  const navigation = useNavigation();
-
   return (
-    <Card
-    activeOpacity={0.8}
-    selected={isSelected}
-    onPress={onPressDetail} 
-    >
-    <Ionicons
-      name="image"
-      size={40}
-      color="#d1d5db"
-      style={{ marginRight: 12 }}
-    />
+    <Card activeOpacity={0.85} onPress={onPressDetail}>
+      {image ? (
+        <Image
+          source={{ uri: image }}
+          style={{ width: 40, height: 40, marginRight: 12, borderRadius: 6 }}
+        />
+      ) : (
+        <Ionicons
+          name="image"
+          size={40}
+          color="#d1d5db"
+          style={{ marginRight: 12 }}
+        />
+      )}
       <PillInfo>
         <PillName>{name}</PillName>
-        <PillMeta>{category} / {type}</PillMeta>
-        <DetailLink onPress={() => navigation.navigate('PillDetailScreen' as never)}>
-  상세정보 보기 &gt;
-</DetailLink>
+        <PillMeta>{className} / {type}</PillMeta>
       </PillInfo>
-      <Ionicons name="bookmark-outline" size={20} color="#60a5fa" />
+      <Ionicons name="chevron-forward" size={18} color="#60a5fa" />
     </Card>
   );
 };

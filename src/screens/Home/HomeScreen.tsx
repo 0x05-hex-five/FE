@@ -1,4 +1,3 @@
-// src/screens/Home/HomeScreen.tsx
 
 import React, { useState } from 'react';
 import {
@@ -8,18 +7,18 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import SearchBox from '../../components/UI/SearchBox';
 import BottomTabBar from '../../components/UI/BottomTabBar';
+import { getSearchKeywords } from '../../utils/recentSearch';
+import { removeSearchKeyword } from '../../utils/recentSearch';
 
-// 메인 컨텐츠 영역
 const Container = styled.View`
   flex: 1;
   padding: 24px 16px;
   background-color: #fff;
 `;
 
-// 스타일 요소들
 const CategoryRow = styled.View`
   flex-direction: row;
   margin-bottom: 12px;
@@ -101,6 +100,18 @@ const AlarmTime = styled.Text`
 const HomeScreen = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchSearches = async () => {
+        const keywords = await getSearchKeywords();
+        setRecentSearches(keywords);
+      };
+
+      fetchSearches();
+    }, [])
+  );
 
   const featureButtons = [
     { title: '약 촬영', icon: 'camera-outline', screen: 'CameraScreen' },
@@ -110,18 +121,24 @@ const HomeScreen = () => {
   ];
 
   const categories = ['소화제', '진통제', '항생제', '감기약'];
-  const recentSearches = ['타이레놀', '게보린'];
   const alarmSettings = [{ label: '혈압약', time: '매일 오전 8:00' }];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Container>
-          <SearchBox
-            placeholder="의약품명을 입력하세요"
-            value={search}
-            onChangeText={setSearch}
-          />
+        <SearchBox
+  placeholder="의약품명을 입력하세요"
+  value={search}
+  onChangeText={setSearch}
+  onSubmitEditing={() => {
+    if (search.trim()) {
+      navigation.navigate('PillScreen' as never, {
+        initialKeyword: search.trim(),
+      } as never);
+    }
+  }}
+/>
 
           <CategoryRow>
             {categories.map((cat, index) => (
@@ -146,13 +163,30 @@ const HomeScreen = () => {
           </FeatureButtonContainer>
 
           <Section>
-            <SectionTitle>최근 검색 기록</SectionTitle>
-            {recentSearches.map((item, index) => (
-              <Card key={index}>
-                <ListItem>{item}</ListItem>
-              </Card>
-            ))}
-          </Section>
+  <SectionTitle>최근 검색 기록</SectionTitle>
+  {recentSearches.length === 0 ? (
+    <Card><ListItem>최근 검색어가 없습니다.</ListItem></Card>
+  ) : (
+    recentSearches.map((item, index) => (
+      <Card
+        key={index}
+        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+      >
+        <ListItem>{item}</ListItem>
+        <Ionicons
+          name="close"
+          size={20}
+          color="#9ca3af"
+          onPress={async () => {
+            await removeSearchKeyword(item);
+            const keywords = await getSearchKeywords(); 
+            setRecentSearches(keywords);
+          }}
+        />
+      </Card>
+    ))
+  )}
+</Section>
 
           <Section>
             <SectionTitle>알림 설정</SectionTitle>

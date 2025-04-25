@@ -53,29 +53,8 @@ const SkipText = styled.Text`
 const LoginScreen = () => {
   const navigation = useNavigation();
 
-  const handleKakaoLogin = async () => {
-    try {
-      console.log('카카오 로그인 시작');
-      await kakaoLogin();
-
-      const { accessToken } = await getAccessToken();
-      console.log('Access Token:', accessToken);
-
-      const response = await axios.post('http://3.37.55.31:8080/api/auth/login/app', {
-        access_token: accessToken,
-      });
-
-      const { token, user } = response.data;
-
-      await AsyncStorage.setItem('access_token', token.access_token);
-      await AsyncStorage.setItem('refresh_token', token.refresh_token);
-
-      console.log('로그인 성공:', user.name);
-      navigation.navigate('HomeScreen' as never);
-    } catch (err: any) {
-      console.error('로그인 실패:', err);
-      Alert.alert('로그인 실패', err.message || '카카오 로그인 중 오류가 발생했어요 😢');
-    }
+  const handleKakaoLogin = () => {
+    console.log('카카오 로그인 시작');
   };
 
   const handleSkip = () => {

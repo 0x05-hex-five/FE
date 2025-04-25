@@ -5,7 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import InfoCard from '../../components/UI/InfoCard';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import { useNavigation, useRoute } from '@react-navigation/native';
-// import axios from 'axios';
+import { getPillDetail } from '../../api/pill';
 
 const Container = styled.View`
   flex: 1;
@@ -14,7 +14,7 @@ const Container = styled.View`
 
 const Content = styled(ScrollView)`
   flex: 1;
-  padding: 24px 16px 100px;
+  padding: 10px 12px;
 `;
 
 const HeaderBar = styled.View`
@@ -81,35 +81,30 @@ const Tag = styled.Text`
   margin-top: 4px;
 `;
 
-const dummyDetail = {
-  name: '어린이타이레놀산160밀리그램',
-  className: '해열·진통·소염제',
-  type: '일반의약품',
-  efficacy: '감기로 인한 발열, 통증(두통, 치통, 근육통 등)',
-  useMethod: '만 7~12세 1회 1정, 4~6시간 간격으로 복용',
-  precaution: '과용 주의, 간질환자 복용 주의',
-  sideEffect: '속쓰림, 어지럼증, 간기능 이상 등',
-};
+const Spacer = styled.View`
+  height: 70px;
+  background-color: transparent;
+`;
 
 const PillDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const id = (route.params as { id?: number })?.id;
-  const [pill, setPill] = useState(dummyDetail);
+  const [pill, setPill] = useState<any>(null);
 
-   /*
   useEffect(() => {
     const fetchDetail = async () => {
+      if (!id) return;
       try {
-        const res = await axios.get(`http://localhost:8080/api/medicines/${id}`);
-        setPill(res.data.data);
+        const data = await getPillDetail(id);
+        setPill(data);
       } catch (err) {
         console.error(err);
       }
     };
-    if (id) fetchDetail();
+
+    fetchDetail();
   }, [id]);
-  */
 
   return (
     <Container>
@@ -144,19 +139,35 @@ const PillDetailScreen = () => {
               <PillTags>{pill.useMethod}</PillTags>
             </InfoCard>
 
-            <InfoCard title="주의사항">
-              <PillTags>{pill.precaution}</PillTags>
-            </InfoCard>
+            {pill.storageMethod?.trim() && (
+              <InfoCard title="보관방법">
+                <PillTags>{pill.storageMethod}</PillTags>
+              </InfoCard>
+            )}
 
-            <InfoCard title="부작용">
-              <PillTags>{pill.sideEffect}</PillTags>
-            </InfoCard>
+            {pill.precaution?.trim() && (
+              <InfoCard title="주의사항">
+                <PillTags>{pill.precaution}</PillTags>
+              </InfoCard>
+            )}
+
+            {pill.sideEffect?.trim() && (
+              <InfoCard title="부작용">
+                <PillTags>{pill.sideEffect}</PillTags>
+              </InfoCard>
+            )}
+
+            {pill.interaction?.trim() && (
+              <InfoCard title="상호작용">
+                <PillTags>{pill.interaction}</PillTags>
+              </InfoCard>
+            )}
           </>
         ) : (
           <PillTags>해당 약품의 정보를 찾을 수 없습니다.</PillTags>
         )}
       </Content>
-
+      <Spacer /> 
       <BottomTabBar />
     </Container>
   );
