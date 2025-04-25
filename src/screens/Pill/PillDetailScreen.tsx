@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, TouchableOpacity } from 'react-native';
+import { ScrollView, TouchableOpacity, Image  } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import InfoCard from '../../components/UI/InfoCard';
@@ -119,9 +119,17 @@ const PillDetailScreen = () => {
         {pill ? (
           <>
             <PillHeader>
-              <PillImage>
-                <Ionicons name="image" size={30} color="#9ca3af" />
-              </PillImage>
+            <PillImage>
+              {pill.image ? (
+              <Image
+                source={{ uri: pill.image }}
+                style={{ width: 60, height: 60, borderRadius: 8 }}
+                resizeMode="contain"
+              />
+              ) : (
+              <Ionicons name="image" size={30} color="#9ca3af" />
+              )}
+            </PillImage>
               <PillInfo>
                 <PillName>{pill.name}</PillName>
                 <PillTags>{pill.className}</PillTags>
