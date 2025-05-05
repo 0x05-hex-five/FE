@@ -42,7 +42,7 @@
     "@react-native/metro-config": "0.78.2",
     "@react-native/typescript-config": "0.78.2",
     "@types/jest": "^29.5.13",
-    "@types/react": "^19.1.0",
+    "@types/react": "^19.1.2",
     "@types/react-native": "^0.72.8",
     "@types/react-test-renderer": "^19.0.0",
     "babel-plugin-styled-components": "^2.1.4",

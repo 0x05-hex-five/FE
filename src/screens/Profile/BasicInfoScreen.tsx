@@ -1,10 +1,12 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
-import { ScrollView, Alert } from 'react-native';
+import { ScrollView, Alert, Switch } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUser } from '../../api/getUser';
+import { updateUser } from '../../api/updateUser';
 
 const Container = styled.View`
   flex: 1;
@@ -91,13 +93,54 @@ const SaveText = styled.Text`
 const BasicInfoScreen = () => {
   const navigation = useNavigation();
 
+  const [name, setName] = useState('');
   const [gender, setGender] = useState<'여성' | '남성'>('여성');
-  const [age, setAge] = useState('35');
+  const [birth, setBirth] = useState('2000-01-01');
   const [pregnant, setPregnant] = useState<'있음' | '없음'>('없음');
+  const [alertAgree, setAlertAgree] = useState(true);
 
-  const handleSave = () => {
-    Alert.alert('저장됨', `성별: ${gender}, 나이: ${age}, 임신: ${pregnant}`);
-    // 여기서 상태값을 서버로 보내도 되고 저장소에 저장해도 됨
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) return;
+
+        const user = await getUser(userId);
+        setName(user.name);
+        setGender(user.gender === 'WOMAN' ? '여성' : '남성');
+        setBirth(user.birth);
+        setPregnant(user.pregnant ? '있음' : '없음');
+        setAlertAgree(user.alert);
+      } catch (err) {
+        console.error('사용자 정보 불러오기 실패:', err);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('오류', '사용자 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      const payload = {
+        gender: (gender === '여성' ? 'WOMAN' : 'MAN') as 'WOMAN' | 'MAN', 
+        birth,
+        pregnant: pregnant === '있음',
+        alert: alertAgree,
+      };
+
+      await updateUser(userId, payload);
+      Alert.alert('저장 완료', '기본 정보가 수정되었습니다.');
+      navigation.goBack();
+    } catch (error) {
+      console.error('정보 수정 실패:', error);
+      Alert.alert('저장 실패', '서버 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -111,7 +154,7 @@ const BasicInfoScreen = () => {
         </Header>
 
         <Label>이름</Label>
-        <ValueText>홍길동</ValueText>
+        <ValueText>{name || '이름 없음'}</ValueText>
 
         <Label>성별</Label>
         <RadioGroup>
@@ -125,8 +168,13 @@ const BasicInfoScreen = () => {
           </RadioOption>
         </RadioGroup>
 
-        <Label>나이</Label>
-        <Input value={age} onChangeText={setAge} keyboardType="number-pad" />
+        <Label>생년월일</Label>
+        <Input
+          value={birth}
+          onChangeText={setBirth}
+          placeholder="YYYY-MM-DD"
+          keyboardType="numbers-and-punctuation"
+        />
 
         <Label>임신 여부</Label>
         <RadioGroup>
@@ -138,6 +186,11 @@ const BasicInfoScreen = () => {
             <RadioCircle selected={pregnant === '있음'} />
             <ValueText>있음</ValueText>
           </RadioOption>
+        </RadioGroup>
+
+        <Label>알림 수신 동의</Label>
+        <RadioGroup>
+          <Switch value={alertAgree} onValueChange={setAlertAgree} />
         </RadioGroup>
 
         <SaveButton onPress={handleSave}>
