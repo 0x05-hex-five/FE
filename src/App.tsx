@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from './screens/Home/HomeScreen';
@@ -18,6 +18,8 @@ import LoadingScreen from './screens/Combination/LoadingScreen';
 import CameraScreen from './screens/CameraScreen';
 import CombinationScreen from './screens/Combination/ComninationScreen';
 import LoginScreen from './screens/Auth/LoginScreen';
+import SignupScreen from './screens/Auth/SignupScreen';
+import LoginFormScreen from './screens/Auth/LoginFormScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +45,8 @@ const App = () => {
         <Stack.Screen name="SimilarPillScreen" component={SimilarPillScreen} />
         <Stack.Screen name="ResultScreen" component={ResultScreen} />
         <Stack.Screen name="LoadingScreen" component={LoadingScreen} />
+        <Stack.Screen name="SignupScreen" component={SignupScreen} />
+        <Stack.Screen name="LoginFormScreen" component={LoginFormScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

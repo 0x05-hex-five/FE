@@ -1,10 +1,11 @@
-// src/screens/Profile/ProfileScreen.tsx
-
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomTabBar from '../../components/UI/BottomTabBar';
+import { getUser, UserInfo } from '../../api/getUser';
+import dayjs from 'dayjs';
 
 const Container = styled.View`
   flex: 1;
@@ -95,6 +96,28 @@ const CardSub = styled.Text`
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const [user, setUser] = useState<UserInfo | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUser = async () => {
+        try {
+          const id = await AsyncStorage.getItem('userId');
+          if (!id) return;
+          const userData = await getUser(id);
+          setUser(userData);
+        } catch (err) {
+          console.error('사용자 정보 로딩 실패:', err);
+        }
+      };
+
+      fetchUser();
+    }, [])
+  );
+
+  const age = user?.birth ? dayjs().diff(dayjs(user.birth), 'year') : '?';
+  const genderText = user?.gender === 'WOMAN' ? '여성' : '남성';
+  const pregnantText = user?.pregnant ? '임신 중' : '임신 여부: 없음';
 
   return (
     <Container>
@@ -107,9 +130,9 @@ const ProfileScreen = () => {
           <Ionicons name="person" size={32} color="#ffffff" />
         </Avatar>
         <Info>
-          <Name>홍길동님</Name>
-          <Email>example@email.com</Email>
-          <SubInfo>여성 · 35세 · 임신 여부: 없음</SubInfo>
+          <Name>{user?.name ? `${user.name}님` : '이름 없음'}</Name>
+          <Email>{user?.email || '이메일 없음'}</Email>
+          <SubInfo>{`${genderText} · ${age}세 · ${pregnantText}`}</SubInfo>
         </Info>
       </ProfileRow>
 
@@ -120,7 +143,7 @@ const ProfileScreen = () => {
           </CardIcon>
           <CardText>
             <CardTitle>기본 정보</CardTitle>
-            <CardSub>여성 · 35세 · 임신 없음</CardSub>
+            <CardSub>{`${genderText} · ${age}세 · ${pregnantText}`}</CardSub>
           </CardText>
         </CardLeft>
         <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
