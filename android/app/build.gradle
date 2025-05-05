@@ -84,7 +84,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        manifestPlaceholders = [kakaoScheme: "kakao31e91b5fe0e4d4df3ebdc40ef407abae"]
+        manifestPlaceholders = [kakaoScheme: "kakao929cd3169b27929b89ba2c5366e020a3"]
     }
     signingConfigs {
         debug {

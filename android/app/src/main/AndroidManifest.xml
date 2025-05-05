@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.capstone_fe">
     <queries>
       <intent>
       <action android:name="android.intent.action.VIEW" />
@@ -30,8 +30,19 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <activity
+          android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+          android:exported="true">
+         <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:host="oauth"
+               android:scheme="kakao929cd3169b27929b89ba2c5366e020a3" />
+         </intent-filter>
+      </activity> 
         <meta-data
     android:name="com.kakao.sdk.AppKey"
-    android:value="31e91b5fe0e4d4df3ebdc40ef407abae" />
+    android:value="929cd3169b27929b89ba2c5366e020a3" />
     </application>
 </manifest>
