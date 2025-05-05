@@ -3,6 +3,8 @@ import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabBar from '../../components/UI/BottomTabBar';
+import { Alert } from 'react-native';
+import { logout } from '../../api/auth/logout';
 
 const Container = styled.View`
   flex: 1;
@@ -114,6 +116,35 @@ const SettingsScreen = () => {
             </SwitchThumb>
         </SwitchContainer>
       </SettingItem>
+      <SettingItem
+        onPress={async () => {
+        Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
+          { text: '취소', style: 'cancel' },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'LoginScreen' as never }],
+              });
+            } catch (err) {
+              Alert.alert('로그아웃 실패', '서버와의 통신에 실패했습니다.');
+            }
+          },
+        },
+      ]);
+    }}
+  >
+      <ItemLeft>
+      <IconWrapper>
+        <Ionicons name="log-out-outline" size={20} color="#e53e3e" />
+      </IconWrapper>
+      <Label style={{ color: '#e53e3e' }}>로그아웃</Label>
+      </ItemLeft>
+    </SettingItem>
 
       <BottomTabBar />
     </Container>

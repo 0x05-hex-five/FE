@@ -23,6 +23,7 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+//요청 인터셉터: access token을 Authorization 헤더에 넣기
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('userToken');
@@ -34,12 +35,12 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+//응답 인터셉터: access token이 만료된 경우 refresh token으로 재발급
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // access token이 만료되었고 재요청한 적이 없는 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -58,12 +59,20 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = await AsyncStorage.getItem('refreshToken');
+        if (!refreshToken) throw new Error('Refresh token not found');
 
-        const res = await axios.post('http://3.37.55.31:8080/api/auth/reissue-token', {
-          refresh_token: refreshToken,
-        });
+        const res = await axios.post(
+          'http://3.37.55.31:8080/api/auth/reissue',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${refreshToken}`,
+            },
+          }
+        );
 
         const newAccessToken = res.data.data.access_token;
+
         await AsyncStorage.setItem('userToken', newAccessToken);
 
         api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
