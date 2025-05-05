@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabBar from '../../components/UI/BottomTabBar';
+import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logout } from '../../api/auth/logout';
 
 const Container = styled.View`
   flex: 1;
@@ -68,12 +71,49 @@ const Circle = styled.View<{ active: boolean }>`
   background-color: #ffffff;
   position: absolute;
   left: ${({ active }) => (active ? '18px' : '2px')};
-  transition: left 0.2s;
 `;
 
 const SettingsScreen = () => {
   const [autoLogin, setAutoLogin] = useState(true);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    const loadAutoLogin = async () => {
+      const saved = await AsyncStorage.getItem('autoLogin');
+      setAutoLogin(saved === 'true');
+    };
+    loadAutoLogin();
+  }, []);
+
+  const toggleAutoLogin = async () => {
+    const newValue = !autoLogin;
+    setAutoLogin(newValue);
+    await AsyncStorage.setItem('autoLogin', newValue.toString());
+  };
+
+  const handleLogout = async () => {
+    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await logout();
+            await AsyncStorage.multiRemove(['userToken', 'refreshToken', 'userId']);
+            await AsyncStorage.setItem('autoLogin', 'false');
+
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'LoginScreen' as never }],
+            });
+          } catch (err) {
+            Alert.alert('로그아웃 실패', '서버와의 통신에 실패했습니다.');
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <Container>
@@ -101,7 +141,7 @@ const SettingsScreen = () => {
         <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
       </SettingItem>
 
-      <SettingItem activeOpacity={1} onPress={() => setAutoLogin(!autoLogin)}>
+      <SettingItem activeOpacity={1} onPress={toggleAutoLogin}>
         <ItemLeft>
           <IconWrapper>
             <Ionicons name="sync-outline" size={20} color="#3182ce" />
@@ -109,10 +149,19 @@ const SettingsScreen = () => {
           <Label>자동 로그인</Label>
         </ItemLeft>
         <SwitchContainer active={autoLogin}>
-            <SwitchThumb onPress={() => setAutoLogin(!autoLogin)}>
-                <Circle active={autoLogin} />
-            </SwitchThumb>
+          <SwitchThumb onPress={toggleAutoLogin}>
+            <Circle active={autoLogin} />
+          </SwitchThumb>
         </SwitchContainer>
+      </SettingItem>
+
+      <SettingItem onPress={handleLogout}>
+        <ItemLeft>
+          <IconWrapper>
+            <Ionicons name="log-out-outline" size={20} color="#e53e3e" />
+          </IconWrapper>
+          <Label style={{ color: '#e53e3e' }}>로그아웃</Label>
+        </ItemLeft>
       </SettingItem>
 
       <BottomTabBar />
