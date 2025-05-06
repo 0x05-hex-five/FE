@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components/native';
-import { ScrollView, TouchableOpacity, TextInput, Modal, Platform } from 'react-native';
+import { ScrollView, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import { useNavigation } from '@react-navigation/native';
+import {
+  createNotification,
+  getNotifications,
+  getNotification,
+  updateNotification,
+  deleteNotification,
+} from '../../api/notification';
 
 const Container = styled.View`
   flex: 1;
@@ -89,7 +96,6 @@ const AddText = styled.Text`
   font-weight: bold;
 `;
 
-
 const AddAlarmCard = styled.View`
   background-color: #f9fafb;
   border-radius: 12px;
@@ -157,21 +163,86 @@ const BtnText = styled.Text`
 
 const AlarmScreen = () => {
   const navigation = useNavigation();
-  const [allEnabled, setAllEnabled] = useState(true);
-  const [pillAlarmEnabled, setPillAlarmEnabled] = useState(true);
-  const [showForm, setShowForm] = useState(false);
 
+  const [alarms, setAlarms] = useState<{ id: number; name: string; time: string }[]>([]);
   const [alarmName, setAlarmName] = useState('');
   const [time, setTime] = useState(new Date());
+  const [showForm, setShowForm] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const [allEnabled, setAllEnabled] = useState(true);
+  const [pillAlarmEnabled, setPillAlarmEnabled] = useState(true);
 
   const formatTime = (date: Date) =>
     `${date.getHours().toString().padStart(2, '0')}시 ${date.getMinutes().toString().padStart(2, '0')}분`;
 
-  const alarms = [
-    { label: '혈압약 - 아침', time: '매일 오전 8:00' },
-    { label: '혈압약 - 저녁', time: '매일 오후 7:00' },
-  ];
+  const formatApiTime = (date: Date) =>
+    `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+  const fetchAlarms = async () => {
+    try {
+      const res = await getNotifications();
+      setAlarms(res.data);
+    } catch (err) {
+      console.error('알림 목록 조회 실패:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlarms();
+  }, []);
+
+  const handleSaveAlarm = async () => {
+    const payload = {
+      name: alarmName,
+      time: formatApiTime(time),
+    };
+
+    try {
+      if (editMode && editingId !== null) {
+        await updateNotification(editingId, payload);
+      } else {
+        await createNotification(payload);
+      }
+
+      setAlarmName('');
+      setTime(new Date());
+      setShowForm(false);
+      setEditMode(false);
+      setEditingId(null);
+      fetchAlarms();
+    } catch (err) {
+      console.error('알림 저장 실패:', err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteNotification(id);
+      fetchAlarms();
+    } catch (err) {
+      console.error('알림 삭제 실패:', err);
+    }
+  };
+
+  const handleEdit = async (id: number) => {
+    try {
+      const res = await getNotification(id);
+      const alarm = res.data;
+
+      setAlarmName(alarm.name);
+      const [hour, minute] = alarm.time.split(':');
+      setTime(new Date(0, 0, 0, Number(hour), Number(minute)));
+
+      setEditingId(id);
+      setEditMode(true);
+      setShowForm(true);
+    } catch (err) {
+      console.error('단일 알림 조회 실패:', err);
+    }
+  };
 
   return (
     <Container>
@@ -185,12 +256,12 @@ const AlarmScreen = () => {
 
         <Section>
           <SectionRow>
-            <SectionTitle> 모든 알림</SectionTitle>
+            <SectionTitle>모든 알림</SectionTitle>
             <Toggle value={allEnabled} onValueChange={setAllEnabled} />
           </SectionRow>
 
           <SectionRow>
-            <SectionTitle> 약품 복용 시간 알림</SectionTitle>
+            <SectionTitle>약품 복용 시간 알림</SectionTitle>
             <Toggle value={pillAlarmEnabled} onValueChange={setPillAlarmEnabled} />
           </SectionRow>
         </Section>
@@ -198,15 +269,19 @@ const AlarmScreen = () => {
         <Section>
           <SectionTitle>알림 시간 설정</SectionTitle>
 
-          {alarms.map((item, index) => (
-            <AlarmCard key={index}>
+          {alarms.map((item) => (
+            <AlarmCard key={item.id}>
               <AlarmHeader>
-                <AlarmText>{item.label}</AlarmText>
-                <TouchableOpacity>
+                <AlarmText>{item.name}</AlarmText>
+                <TouchableOpacity onPress={() => handleDelete(item.id)}>
                   <Ionicons name="trash-outline" size={18} color="#9ca3af" />
                 </TouchableOpacity>
               </AlarmHeader>
               <AlarmSub>{item.time}</AlarmSub>
+
+              <TouchableOpacity onPress={() => handleEdit(item.id)} style={{ marginTop: 6 }}>
+                <AlarmSub style={{ color: '#3182ce' }}>수정하기</AlarmSub>
+              </TouchableOpacity>
             </AlarmCard>
           ))}
 
@@ -239,11 +314,18 @@ const AlarmScreen = () => {
               )}
 
               <ButtonRow>
-                <CancelBtn onPress={() => setShowForm(false)}>
+                <CancelBtn
+                  onPress={() => {
+                    setShowForm(false);
+                    setAlarmName('');
+                    setEditMode(false);
+                    setEditingId(null);
+                  }}
+                >
                   <BtnText style={{ color: '#1f2937' }}>취소</BtnText>
                 </CancelBtn>
-                <SaveBtn onPress={() => setShowForm(false)}>
-                  <BtnText>저장</BtnText>
+                <SaveBtn onPress={handleSaveAlarm}>
+                  <BtnText>{editMode ? '수정' : '저장'}</BtnText>
                 </SaveBtn>
               </ButtonRow>
             </AddAlarmCard>
@@ -255,7 +337,7 @@ const AlarmScreen = () => {
         </Section>
       </Content>
 
-      <BottomTabBar/>
+      <BottomTabBar />
     </Container>
   );
 };

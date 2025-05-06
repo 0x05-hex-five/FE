@@ -12,6 +12,7 @@ import SearchBox from '../../components/UI/SearchBox';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import { getSearchKeywords } from '../../utils/recentSearch';
 import { removeSearchKeyword } from '../../utils/recentSearch';
+import { getNotifications } from '../../api/notification';
 
 const Container = styled.View`
   flex: 1;
@@ -101,15 +102,21 @@ const HomeScreen = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [alarmSettings, setAlarmSettings] = useState<{ id: number; name: string; time: string }[]>([]);
 
   useFocusEffect(
     React.useCallback(() => {
-      const fetchSearches = async () => {
+      (async () => {
         const keywords = await getSearchKeywords();
         setRecentSearches(keywords);
-      };
-
-      fetchSearches();
+  
+        try {
+          const res = await getNotifications();
+          setAlarmSettings(res.data);
+        } catch (err) {
+          console.error('홈 알림 조회 실패:', err);
+        }
+      })();
     }, [])
   );
 
@@ -121,7 +128,6 @@ const HomeScreen = () => {
   ];
 
   const categories = ['소화제', '진통제', '항생제', '감기약'];
-  const alarmSettings = [{ label: '혈압약', time: '매일 오전 8:00' }];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -187,18 +193,21 @@ const HomeScreen = () => {
     ))
   )}
 </Section>
-
-          <Section>
-            <SectionTitle>알림 설정</SectionTitle>
-            {alarmSettings.map((item, index) => (
-              <Card key={index}>
-                <AlarmItem>
-                  <AlarmLabel>{item.label}</AlarmLabel>
-                  <AlarmTime>{item.time}</AlarmTime>
-                </AlarmItem>
-              </Card>
-            ))}
-          </Section>
+<Section>
+  <SectionTitle>알림 설정</SectionTitle>
+  {alarmSettings.length === 0 ? (
+    <Card><ListItem>등록된 알림이 없습니다.</ListItem></Card>
+  ) : (
+    alarmSettings.map((item) => (
+      <Card key={item.id}>
+        <AlarmItem>
+          <AlarmLabel>{item.name}</AlarmLabel>
+          <AlarmTime>{item.time}</AlarmTime>
+        </AlarmItem>
+      </Card>
+    ))
+  )}
+</Section>
         </Container>
       </ScrollView>
 
@@ -210,11 +219,11 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'relative', // 하단 탭 고정 가능
+    position: 'relative', 
     backgroundColor: '#fff',
   },
   scrollContent: {
-    paddingBottom: 80, // 하단 탭 영역 확보
+    paddingBottom: 80, 
   },
 });
 
