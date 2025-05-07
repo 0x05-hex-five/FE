@@ -2,6 +2,8 @@ import React from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 const Container = styled.View`
   position: absolute;
@@ -56,6 +58,15 @@ const BottomTabBar = () => {
 
   const current = getCurrentTab();
 
+  const handleProfilePress = async () => {
+    const userId = await AsyncStorage.getItem('userId');
+    if (!userId) {
+      Alert.alert('로그인 필요', '로그인 후 이용 가능한 기능입니다.');
+      return;
+    }
+    navigation.navigate('ProfileScreen' as never);
+  };
+
   return (
     <Container>
       <TabButton onPress={() => navigation.navigate('HomeScreen' as never)}>
@@ -76,7 +87,7 @@ const BottomTabBar = () => {
         <Label active={current === '약품정보'}>약품정보</Label>
       </TabButton>
 
-      <TabButton onPress={() => navigation.navigate('ProfileScreen' as never)}>
+      <TabButton onPress={handleProfilePress}>
         <Ionicons
           name="person-outline"
           size={20}
