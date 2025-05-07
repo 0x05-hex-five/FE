@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useFCMToken from './hooks/useFCMToken';
 
 // Screens
 import HomeScreen from './screens/Home/HomeScreen';
@@ -30,6 +31,8 @@ const Stack = createNativeStackNavigator();
 const App = () => {
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
+  useFCMToken();
+  
   useEffect(() => {
     const checkAutoLogin = async () => {
       try {
