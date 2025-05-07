@@ -11,7 +11,6 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBox from '../../components/UI/SearchBox';
 import BottomTabBar from '../../components/UI/BottomTabBar';
-import { getSearchKeywords, removeSearchKeyword } from '../../utils/recentSearch';
 import { getNotifications } from '../../api/notification';
 
 const Container = styled.View`
@@ -108,11 +107,12 @@ const HomeScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
-        const keywords = await getSearchKeywords();
-        setRecentSearches(keywords);
-
         const userId = await AsyncStorage.getItem('userId');
+        const key = userId ? `recentSearches_${userId}` : 'recentSearches_guest';
         setIsLoggedIn(!!userId);
+
+        const saved = await AsyncStorage.getItem(key);
+        setRecentSearches(saved ? JSON.parse(saved) : []);
 
         if (userId) {
           try {
@@ -122,11 +122,35 @@ const HomeScreen = () => {
             console.error('알림 정보 조회 실패:', err);
           }
         } else {
-          setAlarmSettings([]); 
+          setAlarmSettings([]);
         }
       })();
     }, [])
   );
+
+  const saveSearch = async (keyword: string) => {
+    const userId = await AsyncStorage.getItem('userId');
+    const key = userId ? `recentSearches_${userId}` : 'recentSearches_guest';
+
+    const existing = await AsyncStorage.getItem(key);
+    const parsed = existing ? JSON.parse(existing) : [];
+
+    const updated = [keyword, ...parsed.filter((k: string) => k !== keyword)].slice(0, 3);
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
+    setRecentSearches(updated);
+  };
+
+  const deleteSearch = async (keyword: string) => {
+    const userId = await AsyncStorage.getItem('userId');
+    const key = userId ? `recentSearches_${userId}` : 'recentSearches_guest';
+
+    const existing = await AsyncStorage.getItem(key);
+    const parsed = existing ? JSON.parse(existing) : [];
+
+    const updated = parsed.filter((k: string) => k !== keyword);
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
+    setRecentSearches(updated);
+  };
 
   const featureButtons = [
     { title: '약 촬영', icon: 'camera-outline', screen: 'CameraScreen' },
@@ -147,6 +171,7 @@ const HomeScreen = () => {
             onChangeText={setSearch}
             onSubmitEditing={() => {
               if (search.trim()) {
+                saveSearch(search.trim());
                 navigation.navigate('PillScreen' as never, {
                   initialKeyword: search.trim(),
                 } as never);
@@ -174,14 +199,7 @@ const HomeScreen = () => {
               <FeatureButton
                 key={index}
                 onPress={async () => {
-                  if (btn.screen === 'ProfileScreen') {
-                    const userId = await AsyncStorage.getItem('userId');
-                    if (!userId) {
-                      Alert.alert('로그인 필요', '로그인 후 이용 가능한 기능입니다.');
-                      return;
-                    }
-                  }
-                  if (btn.screen === 'FavoritesScreen') {
+                  if (['ProfileScreen', 'FavoritesScreen'].includes(btn.screen)) {
                     const userId = await AsyncStorage.getItem('userId');
                     if (!userId) {
                       Alert.alert('로그인 필요', '로그인 후 이용 가능한 기능입니다.');
@@ -218,11 +236,7 @@ const HomeScreen = () => {
                     name="close"
                     size={20}
                     color="#9ca3af"
-                    onPress={async () => {
-                      await removeSearchKeyword(item);
-                      const keywords = await getSearchKeywords();
-                      setRecentSearches(keywords);
-                    }}
+                    onPress={() => deleteSearch(item)}
                   />
                 </Card>
               ))

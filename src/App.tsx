@@ -38,6 +38,11 @@ const App = () => {
       try {
         const autoLogin = await AsyncStorage.getItem('autoLogin');
         const token = await AsyncStorage.getItem('userToken');
+        const userId = await AsyncStorage.getItem('userId');
+
+        if (!userId) {
+          await AsyncStorage.removeItem('recentSearches_guest');
+        }
 
         if (autoLogin === 'true' && token) {
           setInitialRoute('HomeScreen');

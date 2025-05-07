@@ -6,6 +6,7 @@ import BottomTabBar from '../../components/UI/BottomTabBar';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout } from '../../api/auth/logout';
+import { clearGuestSearchKeywords } from '../../utils/recentSearch';
 
 const Container = styled.View`
   flex: 1;
@@ -75,12 +76,17 @@ const Circle = styled.View<{ active: boolean }>`
 
 const SettingsScreen = () => {
   const [autoLogin, setAutoLogin] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const navigation = useNavigation();
 
   useEffect(() => {
     const loadAutoLogin = async () => {
       const saved = await AsyncStorage.getItem('autoLogin');
       setAutoLogin(saved === 'true');
+
+      const uid = await AsyncStorage.getItem('userId');
+      setUserId(uid);
+
     };
     loadAutoLogin();
   }, []);
@@ -102,7 +108,8 @@ const SettingsScreen = () => {
             await logout();
             await AsyncStorage.multiRemove(['userToken', 'refreshToken', 'userId']);
             await AsyncStorage.setItem('autoLogin', 'false');
-
+            await clearGuestSearchKeywords();
+            
             navigation.reset({
               index: 0,
               routes: [{ name: 'LoginScreen' as never }],
@@ -121,6 +128,7 @@ const SettingsScreen = () => {
         <Title>설정</Title>
       </Header>
 
+{/*
       <SettingItem onPress={() => navigation.navigate('PasswordScreen' as never)}>
         <ItemLeft>
           <IconWrapper>
@@ -130,6 +138,7 @@ const SettingsScreen = () => {
         </ItemLeft>
         <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
       </SettingItem>
+ */}
 
       <SettingItem onPress={() => navigation.navigate('PrivacyScreen' as never)}>
         <ItemLeft>
@@ -141,28 +150,41 @@ const SettingsScreen = () => {
         <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
       </SettingItem>
 
-      <SettingItem activeOpacity={1} onPress={toggleAutoLogin}>
-        <ItemLeft>
-          <IconWrapper>
-            <Ionicons name="sync-outline" size={20} color="#3182ce" />
-          </IconWrapper>
-          <Label>자동 로그인</Label>
-        </ItemLeft>
-        <SwitchContainer active={autoLogin}>
-          <SwitchThumb onPress={toggleAutoLogin}>
-            <Circle active={autoLogin} />
-          </SwitchThumb>
-        </SwitchContainer>
-      </SettingItem>
+      {userId && (
+  <SettingItem activeOpacity={1} onPress={toggleAutoLogin}>
+    <ItemLeft>
+      <IconWrapper>
+        <Ionicons name="sync-outline" size={20} color="#3182ce" />
+      </IconWrapper>
+      <Label>자동 로그인</Label>
+    </ItemLeft>
+    <SwitchContainer active={autoLogin}>
+      <SwitchThumb onPress={toggleAutoLogin}>
+        <Circle active={autoLogin} />
+      </SwitchThumb>
+    </SwitchContainer>
+  </SettingItem>
+)}
 
-      <SettingItem onPress={handleLogout}>
-        <ItemLeft>
-          <IconWrapper>
-            <Ionicons name="log-out-outline" size={20} color="#e53e3e" />
-          </IconWrapper>
-          <Label style={{ color: '#e53e3e' }}>로그아웃</Label>
-        </ItemLeft>
-      </SettingItem>
+      {userId ? (
+        <SettingItem onPress={handleLogout}>
+          <ItemLeft>
+            <IconWrapper>
+              <Ionicons name="log-out-outline" size={20} color="#e53e3e" />
+            </IconWrapper>
+            <Label style={{ color: '#e53e3e' }}>로그아웃</Label>
+          </ItemLeft>
+        </SettingItem>
+      ) : (
+        <SettingItem onPress={() => navigation.navigate('LoginScreen' as never)}>
+          <ItemLeft>
+            <IconWrapper>
+              <Ionicons name="log-in-outline" size={20} color="#3182ce" />
+            </IconWrapper>
+            <Label>로그인</Label>
+          </ItemLeft>
+        </SettingItem>
+      )}
 
       <BottomTabBar />
     </Container>
