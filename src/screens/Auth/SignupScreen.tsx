@@ -41,7 +41,7 @@ const Row = styled.View`
 
 const GenderToggle = styled.TouchableOpacity<{ active: boolean }>`
   padding: 12px 24px;
-  background-color: ${({ active }) => (active ? '#000' : '#eee')};
+  background-color: ${({ active }) => (active ? '#007bff' : '#eee')};
   border-radius: 8px;
 `;
 
@@ -51,7 +51,7 @@ const GenderText = styled.Text<{ active: boolean }>`
 `;
 
 const SubmitButton = styled.TouchableOpacity`
-  background-color: #191919;
+  background-color: #007bff;
   padding: 16px;
   border-radius: 8px;
   align-items: center;
@@ -106,7 +106,7 @@ const SignupScreen = ({ navigation }: any) => {
 
         <Label>생년월일</Label>
         <Input
-          placeholder="YYYY-MM-DD"
+          placeholder={"YYYY-MM-DD\n해당 양식을 지켜 '-'도 입력해주세요"}
           placeholderTextColor="#999"
           onChangeText={(v: string) =>
             setForm({ ...form, birth: `${v}T00:00:00.000Z` })

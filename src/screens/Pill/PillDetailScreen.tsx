@@ -8,6 +8,7 @@ import BottomTabBar from '../../components/UI/BottomTabBar';
 import { getFavorites, createFavorite, deleteFavorite } from '../../api/favorite';
 import { getPillDetail } from '../../api/pill';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveSearchKeyword } from '../../utils/recentSearch';
 
 const Container = styled.View`
   flex: 1;
@@ -103,10 +104,15 @@ const PillDetailScreen = () => {
       try {
         const uid = await AsyncStorage.getItem('userId');
         setUserId(uid);
-  
+
         const data = await getPillDetail(id);
         setPill(data);
-  
+
+        if (data?.name) {
+          await saveSearchKeyword(data.name, uid);
+        }
+
+        // 즐겨찾기 상태 확인
         if (uid) {
           const favRes = await getFavorites();
           const favIds = favRes.data.data.map((f: any) => f.medicineId);
@@ -116,7 +122,7 @@ const PillDetailScreen = () => {
         console.error(err);
       }
     };
-  
+
     fetchDetail();
   }, [id]);
 

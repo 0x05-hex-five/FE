@@ -160,7 +160,8 @@ const ProfileScreen = () => {
         </CardLeft>
         <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
       </Card>
-
+    
+{/*
       <Card>
         <CardLeft>
           <CardIcon>
@@ -172,6 +173,7 @@ const ProfileScreen = () => {
         </CardLeft>
         <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
       </Card>
+*/}
 
       <Card onPress={() => navigation.navigate('AlarmScreen' as never)}>
         <CardLeft>

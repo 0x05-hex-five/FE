@@ -3,7 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useFCMToken from './hooks/useFCMToken';
-
+import messaging from '@react-native-firebase/messaging';
+import { Alert, PermissionsAndroid, Platform  } from 'react-native';
 // Screens
 import HomeScreen from './screens/Home/HomeScreen';
 import PillScreen from './screens/Pill/PillScreen';
@@ -32,12 +33,43 @@ const App = () => {
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
   useFCMToken();
+
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('알림 권한 거부됨');
+        } else {
+          console.log('알림 권한 허용됨');
+        }
+      }
+    };
+  
+    requestNotificationPermission(); 
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('포그라운드 메시지 수신:', remoteMessage);
+      Alert.alert(remoteMessage.notification?.title ?? '', remoteMessage.notification?.body ?? '');
+    });
+  
+    return unsubscribe;
+  }, []);
   
   useEffect(() => {
     const checkAutoLogin = async () => {
       try {
         const autoLogin = await AsyncStorage.getItem('autoLogin');
         const token = await AsyncStorage.getItem('userToken');
+        const userId = await AsyncStorage.getItem('userId');
+
+        if (!userId) {
+          await AsyncStorage.removeItem('recentSearches_guest');
+        }
 
         if (autoLogin === 'true' && token) {
           setInitialRoute('HomeScreen');
