@@ -7,6 +7,7 @@ import InfoCard from '../../components/UI/InfoCard';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import { getFavorites, createFavorite, deleteFavorite } from '../../api/favorite';
 import { getPillDetail } from '../../api/pill';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Container = styled.View`
   flex: 1;
@@ -94,26 +95,36 @@ const PillDetailScreen = () => {
   const id = (route.params as { id?: number })?.id;
   const [pill, setPill] = useState<any>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDetail = async () => {
       if (!id) return;
       try {
+        const uid = await AsyncStorage.getItem('userId');
+        setUserId(uid);
+  
         const data = await getPillDetail(id);
         setPill(data);
-
-        const favRes = await getFavorites();
-        const favIds = favRes.data.data.map((f: any) => f.medicineId);
-        setIsFavorite(favIds.includes(data.id));
+  
+        if (uid) {
+          const favRes = await getFavorites();
+          const favIds = favRes.data.data.map((f: any) => f.medicineId);
+          setIsFavorite(favIds.includes(data.id));
+        }
       } catch (err) {
         console.error(err);
       }
     };
-
+  
     fetchDetail();
   }, [id]);
 
   const toggleFavorite = async () => {
+    if (!userId) {
+      Alert.alert('로그인 필요', '로그인 후 이용 가능합니다.');
+      return;
+    }
     if (!pill?.id) return;
     try {
       if (isFavorite) {

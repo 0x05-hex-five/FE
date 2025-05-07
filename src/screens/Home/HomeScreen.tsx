@@ -1,17 +1,17 @@
-
 import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBox from '../../components/UI/SearchBox';
 import BottomTabBar from '../../components/UI/BottomTabBar';
-import { getSearchKeywords } from '../../utils/recentSearch';
-import { removeSearchKeyword } from '../../utils/recentSearch';
+import { getSearchKeywords, removeSearchKeyword } from '../../utils/recentSearch';
 import { getNotifications } from '../../api/notification';
 
 const Container = styled.View`
@@ -103,18 +103,26 @@ const HomeScreen = () => {
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [alarmSettings, setAlarmSettings] = useState<{ id: number; name: string; time: string }[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
         const keywords = await getSearchKeywords();
         setRecentSearches(keywords);
-  
-        try {
-          const res = await getNotifications();
-          setAlarmSettings(res.data);
-        } catch (err) {
-          console.error('홈 알림 조회 실패:', err);
+
+        const userId = await AsyncStorage.getItem('userId');
+        setIsLoggedIn(!!userId);
+
+        if (userId) {
+          try {
+            const res = await getNotifications();
+            setAlarmSettings(res.data);
+          } catch (err) {
+            console.error('알림 정보 조회 실패:', err);
+          }
+        } else {
+          setAlarmSettings([]); 
         }
       })();
     }, [])
@@ -133,24 +141,29 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Container>
-        <SearchBox
-  placeholder="의약품명을 입력하세요"
-  value={search}
-  onChangeText={setSearch}
-  onSubmitEditing={() => {
-    if (search.trim()) {
-      navigation.navigate('PillScreen' as never, {
-        initialKeyword: search.trim(),
-      } as never);
-    }
-  }}
-/>
+          <SearchBox
+            placeholder="의약품명을 입력하세요"
+            value={search}
+            onChangeText={setSearch}
+            onSubmitEditing={() => {
+              if (search.trim()) {
+                navigation.navigate('PillScreen' as never, {
+                  initialKeyword: search.trim(),
+                } as never);
+              }
+            }}
+          />
 
           <CategoryRow>
             {categories.map((cat, index) => (
-              <CategoryButton 
+              <CategoryButton
                 key={index}
-                onPress={() => navigation.navigate('KeywordPillScreen' as never, { initialKeyword: cat } as never)}>
+                onPress={() =>
+                  navigation.navigate('KeywordPillScreen' as never, {
+                    initialKeyword: cat,
+                  } as never)
+                }
+              >
                 <CategoryText>{cat}</CategoryText>
               </CategoryButton>
             ))}
@@ -160,7 +173,23 @@ const HomeScreen = () => {
             {featureButtons.map((btn, index) => (
               <FeatureButton
                 key={index}
-                onPress={() => navigation.navigate(btn.screen as never)}
+                onPress={async () => {
+                  if (btn.screen === 'ProfileScreen') {
+                    const userId = await AsyncStorage.getItem('userId');
+                    if (!userId) {
+                      Alert.alert('로그인 필요', '로그인 후 이용 가능한 기능입니다.');
+                      return;
+                    }
+                  }
+                  if (btn.screen === 'FavoritesScreen') {
+                    const userId = await AsyncStorage.getItem('userId');
+                    if (!userId) {
+                      Alert.alert('로그인 필요', '로그인 후 이용 가능한 기능입니다.');
+                      return;
+                    }
+                  }
+                  navigation.navigate(btn.screen as never);
+                }}
               >
                 <Ionicons name={btn.icon} size={28} color="#3182ce" />
                 <FeatureText>{btn.title}</FeatureText>
@@ -169,48 +198,60 @@ const HomeScreen = () => {
           </FeatureButtonContainer>
 
           <Section>
-  <SectionTitle>최근 검색 기록</SectionTitle>
-  {recentSearches.length === 0 ? (
-    <Card><ListItem>최근 검색어가 없습니다.</ListItem></Card>
-  ) : (
-    recentSearches.map((item, index) => (
-      <Card
-        key={index}
-        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <ListItem>{item}</ListItem>
-        <Ionicons
-          name="close"
-          size={20}
-          color="#9ca3af"
-          onPress={async () => {
-            await removeSearchKeyword(item);
-            const keywords = await getSearchKeywords(); 
-            setRecentSearches(keywords);
-          }}
-        />
-      </Card>
-    ))
-  )}
-</Section>
-<Section>
-  <SectionTitle>알림 설정</SectionTitle>
-  {alarmSettings.length === 0 ? (
-    <Card><ListItem>등록된 알림이 없습니다.</ListItem></Card>
-  ) : (
-    alarmSettings.map((item) => (
-      <Card key={item.id}>
-        <AlarmItem>
-          <AlarmLabel>{item.name}</AlarmLabel>
-          <AlarmTime>{item.time}</AlarmTime>
-        </AlarmItem>
-      </Card>
-    ))
-  )}
-</Section>
+            <SectionTitle>최근 검색 기록</SectionTitle>
+            {recentSearches.length === 0 ? (
+              <Card>
+                <ListItem>최근 검색어가 없습니다.</ListItem>
+              </Card>
+            ) : (
+              recentSearches.map((item, index) => (
+                <Card
+                  key={index}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <ListItem style={{ flex: 1 }} numberOfLines={1} ellipsizeMode="tail">{item}</ListItem>
+                  <Ionicons
+                    name="close"
+                    size={20}
+                    color="#9ca3af"
+                    onPress={async () => {
+                      await removeSearchKeyword(item);
+                      const keywords = await getSearchKeywords();
+                      setRecentSearches(keywords);
+                    }}
+                  />
+                </Card>
+              ))
+            )}
+          </Section>
+
+          <Section>
+            <SectionTitle>알림 설정</SectionTitle>
+            {!isLoggedIn ? (
+              <Card>
+                <ListItem>로그인 후 이용 가능한 기능입니다.</ListItem>
+              </Card>
+            ) : alarmSettings.length === 0 ? (
+              <Card>
+                <ListItem>등록된 알림이 없습니다.</ListItem>
+              </Card>
+            ) : (
+              alarmSettings.map((item) => (
+                <Card key={item.id}>
+                  <AlarmItem>
+                    <AlarmLabel>{item.name}</AlarmLabel>
+                    <AlarmTime>{item.time}</AlarmTime>
+                  </AlarmItem>
+                </Card>
+              ))
+            )}
+          </Section>
         </Container>
       </ScrollView>
-
       <BottomTabBar />
     </SafeAreaView>
   );
@@ -219,11 +260,11 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'relative', 
+    position: 'relative',
     backgroundColor: '#fff',
   },
   scrollContent: {
-    paddingBottom: 80, 
+    paddingBottom: 80,
   },
 });
 

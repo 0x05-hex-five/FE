@@ -94,7 +94,6 @@ const FavoritesScreen = () => {
     }
   };
 
-  // 화면에 다시 진입했을 때 최신화
   useFocusEffect(
     useCallback(() => {
       fetchFavorites();
