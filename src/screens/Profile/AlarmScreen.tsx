@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components/native';
-import { ScrollView, TouchableOpacity, Platform } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { ScrollView, TouchableOpacity, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import { useNavigation } from '@react-navigation/native';
@@ -118,19 +117,24 @@ const Input = styled.TextInput`
   color: #1f2937;
 `;
 
-const TimePickerButton = styled.TouchableOpacity`
+const TimeRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+const TimeInputWrapper = styled.View`
+  flex: 1;
+  margin-right: 8px;
+`;
+
+const TimeInput = styled.TextInput`
+  flex: 1;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 10px 12px;
-  margin-bottom: 12px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const TimeText = styled.Text`
   font-size: 13px;
   color: #1f2937;
+  margin-bottom: 12px;
 `;
 
 const ButtonRow = styled.View`
@@ -166,20 +170,17 @@ const AlarmScreen = () => {
 
   const [alarms, setAlarms] = useState<{ id: number; name: string; time: string }[]>([]);
   const [alarmName, setAlarmName] = useState('');
-  const [time, setTime] = useState(new Date());
+  const [hour, setHour] = useState('00');
+  const [minute, setMinute] = useState('00');
   const [showForm, setShowForm] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [allEnabled, setAllEnabled] = useState(true);
   const [pillAlarmEnabled, setPillAlarmEnabled] = useState(true);
 
-  const formatTime = (date: Date) =>
-    `${date.getHours().toString().padStart(2, '0')}시 ${date.getMinutes().toString().padStart(2, '0')}분`;
-
-  const formatApiTime = (date: Date) =>
-    `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  const formatApiTime = () =>
+    `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
 
   const fetchAlarms = async () => {
     try {
@@ -195,9 +196,18 @@ const AlarmScreen = () => {
   }, []);
 
   const handleSaveAlarm = async () => {
+    if (
+      isNaN(Number(hour)) || isNaN(Number(minute)) ||
+      Number(hour) < 0 || Number(hour) > 23 ||
+      Number(minute) < 0 || Number(minute) > 59
+    ) {
+      Alert.alert('시간 오류', '시간은 0~23, 분은 0~59 사이여야 합니다.');
+      return;
+    }
+
     const payload = {
       name: alarmName,
-      time: formatApiTime(time),
+      time: formatApiTime(),
     };
 
     try {
@@ -208,7 +218,8 @@ const AlarmScreen = () => {
       }
 
       setAlarmName('');
-      setTime(new Date());
+      setHour('00');
+      setMinute('00');
       setShowForm(false);
       setEditMode(false);
       setEditingId(null);
@@ -233,8 +244,9 @@ const AlarmScreen = () => {
       const alarm = res.data;
 
       setAlarmName(alarm.name);
-      const [hour, minute] = alarm.time.split(':');
-      setTime(new Date(0, 0, 0, Number(hour), Number(minute)));
+      const [hourStr, minuteStr] = alarm.time.split(':');
+      setHour(hourStr);
+      setMinute(minuteStr);
 
       setEditingId(id);
       setEditMode(true);
@@ -246,7 +258,7 @@ const AlarmScreen = () => {
 
   return (
     <Container>
-      <Content>
+      <Content contentContainerStyle={{ paddingBottom: 80 }}>
         <Header>
           <BackButton onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#1f2937" />
@@ -289,29 +301,33 @@ const AlarmScreen = () => {
             <AddAlarmCard>
               <Label>알림명</Label>
               <Input
-                placeholder="알림명(복용할 약 이름)을 입력하세요"
+                placeholder="알림명(복용할 약 이름)"
                 placeholderTextColor="#9ca3af"
                 value={alarmName}
                 onChangeText={setAlarmName}
               />
 
               <Label>복용 시간</Label>
-              <TimePickerButton onPress={() => setShowTimePicker(true)}>
-                <TimeText>{formatTime(time)}</TimeText>
-                <Ionicons name="time-outline" size={18} color="#9ca3af" />
-              </TimePickerButton>
-
-              {showTimePicker && (
-                <DateTimePicker
-                  mode="time"
-                  value={time}
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(event, selectedTime) => {
-                    setShowTimePicker(false);
-                    if (selectedTime) setTime(selectedTime);
-                  }}
-                />
-              )}
+              <TimeRow>
+                <TimeInputWrapper>
+                  <Label>시 (0~23)</Label>
+                  <TimeInput
+                    placeholder="시"
+                    value={hour}
+                    keyboardType="number-pad"
+                    onChangeText={(text) => setHour(text.replace(/[^0-9]/g, ''))}
+                  />
+                </TimeInputWrapper>
+                <TimeInputWrapper style={{ marginRight: 0 }}>
+                  <Label>분 (0~59)</Label>
+                  <TimeInput
+                    placeholder="분"
+                    value={minute}
+                    keyboardType="number-pad"
+                    onChangeText={(text) => setMinute(text.replace(/[^0-9]/g, ''))}
+                  />
+                </TimeInputWrapper>
+              </TimeRow>
 
               <ButtonRow>
                 <CancelBtn
@@ -320,6 +336,8 @@ const AlarmScreen = () => {
                     setAlarmName('');
                     setEditMode(false);
                     setEditingId(null);
+                    setHour('00');
+                    setMinute('00');
                   }}
                 >
                   <BtnText style={{ color: '#1f2937' }}>취소</BtnText>

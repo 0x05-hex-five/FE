@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "251841532664",
-    "project_id": "medi-2525c",
-    "storage_bucket": "medi-2525c.firebasestorage.app"
+    "project_number": "42935262588",
+    "project_id": "ismedi-notification-system",
+    "storage_bucket": "ismedi-notification-system.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:251841532664:android:e2ea08f76f59ad10dd610d",
+        "mobilesdk_app_id": "1:42935262588:android:3b950e90cf49b1873e58f9",
         "android_client_info": {
           "package_name": "com.capstone_fe"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAAGZ_2bD26kYbcJ6nc-ziwlCWfKZELTAA"
+          "current_key": "AIzaSyBQ4QdMtWDSXQFDJ810CQl6lwpr7D8luM0"
         }
       ],
       "services": {

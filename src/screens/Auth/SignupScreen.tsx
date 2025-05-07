@@ -106,7 +106,7 @@ const SignupScreen = ({ navigation }: any) => {
 
         <Label>생년월일</Label>
         <Input
-          placeholder="YYYY-MM-DD"
+          placeholder={"YYYY-MM-DD\n해당 양식을 지켜 '-'도 입력해주세요"}
           placeholderTextColor="#999"
           onChangeText={(v: string) =>
             setForm({ ...form, birth: `${v}T00:00:00.000Z` })
