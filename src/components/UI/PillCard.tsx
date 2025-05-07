@@ -10,6 +10,8 @@ interface PillCardProps {
   className: string; 
   image?: string | null;
   onPressDetail: () => void;
+  onPressDelete?: () => void;
+  showDeleteIcon?: boolean;
 }
 
 const Card = styled.TouchableOpacity`
@@ -42,6 +44,8 @@ const PillCard = ({
   type,
   image,
   onPressDetail,
+  onPressDelete,
+  showDeleteIcon,
 }: PillCardProps) => {
   return (
     <Card activeOpacity={0.85} onPress={onPressDetail}>
@@ -62,7 +66,17 @@ const PillCard = ({
         <PillName>{name}</PillName>
         <PillMeta>{className} / {type}</PillMeta>
       </PillInfo>
-      <Ionicons name="chevron-forward" size={18} color="#60a5fa" />
+
+      {showDeleteIcon && onPressDelete ? (
+        <Ionicons
+          name="trash-outline"
+          size={20}
+          color="#ef4444"
+          onPress={onPressDelete}
+        />
+      ) : (
+        <Ionicons name="chevron-forward" size={18} color="#60a5fa" />
+      )}
     </Card>
   );
 };
