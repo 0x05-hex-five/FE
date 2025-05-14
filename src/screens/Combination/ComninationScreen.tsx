@@ -1,7 +1,6 @@
 // screens/CombinationScreen.tsx
-
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Image } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -42,12 +41,20 @@ const PillBox = styled.TouchableOpacity`
   border-radius: 12px;
   align-items: center;
   justify-content: center;
+  padding: 8px;
+`;
+
+const PillImage = styled.Image`
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 `;
 
 const PillText = styled.Text`
-  margin-top: 8px;
   font-size: 14px;
-  color: #4b5563;
+  color: #1f2937;
+  text-align: center;
 `;
 
 const CheckButton = styled.TouchableOpacity`
@@ -65,21 +72,13 @@ const CheckButtonText = styled.Text`
 
 const CombinationScreen = () => {
   const navigation = useNavigation();
+  const [pill1, setPill1] = useState<{ id: number; name: string; image?: string | null } | null>(null);
+  const [pill2, setPill2] = useState<{ id: number; name: string; image?: string | null } | null>(null);
 
-  const [pill1, setPill1] = useState<string | null>(null);
-  const [pill2, setPill2] = useState<string | null>(null);
-
-  const handleSelectPill1 = () => {
+  const handleSelectPill = (pillSetter: any, selected: any) => {
     navigation.navigate('PillScreen', {
-      onSelect: (name: string) => setPill1(name),
-      selected: pill1,
-    });
-  };
-  
-  const handleSelectPill2 = () => {
-    navigation.navigate('PillScreen', {
-      onSelect: (name: string) => setPill2(name),
-      selected: pill2,
+      onSelect: (pill: { name: string; id: number; image?: string | null }) => pillSetter(pill),
+      selected,
     });
   };
 
@@ -88,15 +87,12 @@ const CombinationScreen = () => {
       Alert.alert('약품 선택', '두 개의 약품을 모두 선택해주세요.');
       return;
     }
-  
-    navigation.navigate('LoadingScreen');
 
-    setTimeout(() => {
-      navigation.navigate('ResultScreen', {
-        pill1: { name: pill1, ingredient: '성분예시1' },
-        pill2: { name: pill2, ingredient: '성분예시2' },
-      });
-    }, 2000);
+    navigation.navigate('LoadingScreen');
+    navigation.navigate('ResultScreen', {
+      id1: pill1.id,
+      id2: pill2.id,
+    });
   };
 
   return (
@@ -109,19 +105,41 @@ const CombinationScreen = () => {
       </Header>
 
       <Row>
-        <PillBox onPress={handleSelectPill1}>
-          <Ionicons name="add" size={24} color="#6b7280" />
-          <PillText>{pill1 || '첫 번째 약품 선택'}</PillText>
+        <PillBox onPress={() => handleSelectPill(setPill1, pill1)}>
+          {pill1 ? (
+            <>
+              {pill1.image ? (
+                <PillImage source={{ uri: pill1.image }} />
+              ) : null}
+              <PillText>{pill1.name}</PillText>
+            </>
+          ) : (
+            <>
+              <Ionicons name="add" size={24} color="#6b7280" />
+              <PillText>첫 번째 약품 선택</PillText>
+            </>
+          )}
         </PillBox>
 
-        <PillBox onPress={handleSelectPill2}>
-          <Ionicons name="add" size={24} color="#6b7280" />
-          <PillText>{pill2 || '두 번째 약품 선택'}</PillText>
+        <PillBox onPress={() => handleSelectPill(setPill2, pill2)}>
+          {pill2 ? (
+            <>
+              {pill2.image ? (
+                <PillImage source={{ uri: pill2.image }} />
+              ) : null}
+              <PillText>{pill2.name}</PillText>
+            </>
+          ) : (
+            <>
+              <Ionicons name="add" size={24} color="#6b7280" />
+              <PillText>두 번째 약품 선택</PillText>
+            </>
+          )}
         </PillBox>
       </Row>
 
       <CheckButton onPress={handleCheck}>
-        <CheckButtonText>약품을 선택해주세요</CheckButtonText>
+        <CheckButtonText>조합 확인하기</CheckButtonText>
       </CheckButton>
 
       <BottomTabBar />
