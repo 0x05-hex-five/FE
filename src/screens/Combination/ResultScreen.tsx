@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import BottomTabBar from '../../components/UI/BottomTabBar';
-import { useRoute } from '@react-navigation/native';
+import { checkPillInteraction } from '../../api/pill'; 
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -46,11 +46,7 @@ const PillName = styled.Text`
   font-weight: bold;
   color: #1f2937;
   margin-bottom: 4px;
-`;
-
-const PillIngredient = styled.Text`
-  font-size: 12px;
-  color: #6b7280;
+  text-align: center;
 `;
 
 const PrimaryButton = styled.TouchableOpacity`
@@ -67,54 +63,22 @@ const ButtonText = styled.Text`
   font-weight: 600;
 `;
 
-const AlertBox = styled.View`
-  background-color: #fee2e2;
+const AlertBox = styled.View<{ danger?: boolean }>`
+  background-color: ${({ danger }) => (danger ? '#fee2e2' : '#d1fae5')};
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 16px;
-  flex-direction: row;
-  align-items: center;
 `;
 
-const AlertIcon = styled(Ionicons).attrs({
-  name: 'alert-circle',
-  size: 20,
-  color: '#b91c1c',
-})`
-  margin-right: 8px;
-`;
-
-const AlertMessage = styled.Text`
+const AlertMessage = styled.Text<{ danger?: boolean }>`
   font-size: 14px;
-  color: #b91c1c;
+  color: ${({ danger }) => (danger ? '#b91c1c' : '#065f46')};
 `;
 
 const CenterBox = styled.View`
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
-`;
-
-const ExplainCard = styled.View`
-  background-color: #f3f4f6;
-  padding: 16px;
-  border-radius: 12px;
-  width: 100%;
-  align-items: center;
-  margin-bottom: 16px;
-`;
-
-const ExplainTitle = styled.Text`
-  font-size: 14px;
-  font-weight: bold;
-  color: #374151;
-  margin-bottom: 6px;
-`;
-
-const ExplainText = styled.Text`
-  font-size: 13px;
-  color: #4b5563;
-  text-align: center;
 `;
 
 const DetailButton = styled.TouchableOpacity`
@@ -137,13 +101,75 @@ const DetailButtonText = styled.Text`
 const ResultScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { pill1, pill2 } = route.params as {
-    pill1: { name: string; ingredient: string };
-    pill2: { name: string; ingredient: string };
+  const { id1, id2 } = route.params as { id1: number; id2: number };
+
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  const fetchInteraction = async () => {
+    try {
+      const res = await checkPillInteraction(id1, id2);
+      setResult(res || null); 
+    } catch (err) {
+      console.error('병용금기 API 오류:', err);
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const resultText = '해당 약품은 함께 복용이 불가능합니다.';
-  const explanation = '두 약품의 성분이 상호작용하여 부작용이 발생할 수 있으므로 함께 복용하지 마십시오.';
+  fetchInteraction();
+}, [id1, id2]);
+
+const renderResult = () => {
+  if (!result) {
+    return (
+      <AlertBox danger>
+        <AlertMessage danger>조합 확인이 어렵습니다. 다시 시도해주세요.</AlertMessage>
+      </AlertBox>
+    );
+  }
+
+  if (result.prohibit === true) {
+    return (
+      <>
+        <AlertBox danger>
+          <AlertMessage danger>이 약들은 함께 복용하면 안 됩니다.</AlertMessage>
+        </AlertBox>
+        {result.prohibitContent && (
+          <AlertBox danger>
+            <AlertMessage danger>사유: {result.prohibitContent}</AlertMessage>
+          </AlertBox>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <AlertBox>
+      <AlertMessage>이 약들은 함께 복용 가능합니다.</AlertMessage>
+    </AlertBox>
+  );
+};
+
+  if (loading) {
+  return (
+    <Container>
+      <Header>
+        <BackButton onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#1f2937" />
+        </BackButton>
+        <Title>약품 조합 결과</Title>
+      </Header>
+
+      <CenterBox style={{ flex: 1 }}>
+        <Ionicons name="hourglass-outline" size={32} color="#2563eb" />
+        <PillName style={{ marginTop: 8 }}>불러오는 중...</PillName>
+      </CenterBox>
+    </Container>
+  );
+}
 
   return (
     <Container>
@@ -151,48 +177,40 @@ const ResultScreen = () => {
         <BackButton onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#1f2937" />
         </BackButton>
-        <Title>약품 조합 분석</Title>
+        <Title>약품 조합 결과</Title>
       </Header>
 
       <Row>
         <PillBox>
           <Ionicons name="image" size={36} color="#9ca3af" style={{ marginBottom: 8 }} />
-          <PillName>{pill1.name}</PillName>
-          <PillIngredient>{pill1.ingredient}</PillIngredient>
+          <PillName>{result?.itemName1 || '약품 1'}</PillName>
         </PillBox>
 
         <PillBox>
           <Ionicons name="image" size={36} color="#9ca3af" style={{ marginBottom: 8 }} />
-          <PillName>{pill2.name}</PillName>
-          <PillIngredient>{pill2.ingredient}</PillIngredient>
+          <PillName>{result?.itemName2 || '약품 2'}</PillName>
         </PillBox>
       </Row>
 
-      <PrimaryButton onPress={() => navigation.goBack()}>
+      <PrimaryButton onPress={() => navigation.navigate('CombinationScreen')}>
         <ButtonText>다시 분석하기</ButtonText>
       </PrimaryButton>
 
-      <AlertBox>
-        <AlertIcon />
-        <AlertMessage>분석 결과: {resultText}</AlertMessage>
-      </AlertBox>
+      {!loading && renderResult()}
 
-      <CenterBox>
-        <ExplainCard>
-          <ExplainTitle>상세 설명</ExplainTitle>
-          <ExplainText>{explanation}</ExplainText>
-        </ExplainCard>
+      {result && (
+        <CenterBox>
+          <DetailButton onPress={() => navigation.navigate('PillDetailScreen', { name: result.itemName1 })}>
+            <Ionicons name="information-circle-outline" size={16} color="#1f2937" />
+            <DetailButtonText>{result.itemName1} 상세정보 보기</DetailButtonText>
+          </DetailButton>
 
-        <DetailButton onPress={() => navigation.navigate('PillDetailScreen', { name: pill1.name })}>
-          <Ionicons name="information-circle-outline" size={16} color="#1f2937" />
-          <DetailButtonText>{pill1.name} 상세정보 보기</DetailButtonText>
-        </DetailButton>
-
-        <DetailButton onPress={() => navigation.navigate('PillDetailScreen', { name: pill2.name })}>
-          <Ionicons name="information-circle-outline" size={16} color="#1f2937" />
-          <DetailButtonText>{pill2.name} 상세정보 보기</DetailButtonText>
-        </DetailButton>
-      </CenterBox>
+          <DetailButton onPress={() => navigation.navigate('PillDetailScreen', { name: result.itemName2 })}>
+            <Ionicons name="information-circle-outline" size={16} color="#1f2937" />
+            <DetailButtonText>{result.itemName2} 상세정보 보기</DetailButtonText>
+          </DetailButton>
+        </CenterBox>
+      )}
 
       <BottomTabBar />
     </Container>

@@ -91,7 +91,7 @@ const PillScreen = () => {
               image={item.image}
               onPressDetail={async () => {
                 if (onSelect) {
-                  onSelect(item.name);
+                  onSelect({ name: item.name, id: item.id, image: item.image });
                   navigation.goBack();
                 } else {
                   const userId = await AsyncStorage.getItem('userId');
