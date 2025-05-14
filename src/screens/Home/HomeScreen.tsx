@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBox from '../../components/UI/SearchBox';
 import BottomTabBar from '../../components/UI/BottomTabBar';
 import { getNotifications } from '../../api/notification';
+import axios from 'axios';
 
 const Container = styled.View`
   flex: 1;
@@ -19,8 +20,25 @@ const Container = styled.View`
   background-color: #fff;
 `;
 
+const ChoseongScroll = styled.ScrollView`
+  margin-bottom: 12px;
+`;
+
+const ChoseongButton = styled.TouchableOpacity`
+  background-color: #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 12px;
+  margin-right: 8px;
+`;
+
+const ChoseongText = styled.Text`
+  font-size: 14px;
+  color: #1f2937;
+`;
+
 const CategoryRow = styled.View`
   flex-direction: row;
+  flex-wrap: wrap;
   margin-bottom: 12px;
 `;
 
@@ -28,7 +46,7 @@ const CategoryButton = styled.TouchableOpacity`
   background-color: rgb(238, 240, 242);
   padding: 6px 14px;
   border-radius: 20px;
-  margin-right: 8px;
+  margin: 4px 8px 4px 0;
 `;
 
 const CategoryText = styled.Text`
@@ -97,22 +115,50 @@ const AlarmTime = styled.Text`
   color: #9ca3af;
 `;
 
+const CHOSEONG_LIST = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+const getChoseong = (char: string): string => {
+  const CHOSEONG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const code = char.charCodeAt(0) - 0xac00;
+  if (code < 0 || code > 11171) return char;
+  const index = Math.floor(code / 588);
+  return CHOSEONG[index];
+};
+
 const HomeScreen = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [alarmSettings, setAlarmSettings] = useState<{ id: number; name: string; time: string }[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [pillCategories, setPillCategories] = useState<string[]>([]);
+  const [selectedChoseong, setSelectedChoseong] = useState<string | null>(null);
+  const [searchLoading, setSearchLoading] = useState(true);
+  const [alarmLoading, setAlarmLoading] = useState(true);
 
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
+        try {
+          const res = await axios.get('http://3.37.55.31:8080/api/medicines', {
+            params: { name: '', type: 'ALL' },
+          });
+          const allData = res.data.data || [];
+          const uniqueClasses = [...new Set(
+  allData.map((item: any) => item.className).filter((cls: unknown): cls is string => typeof cls === 'string')
+)] as string[];
+          setPillCategories(uniqueClasses);
+        } catch (err) {
+          console.error('카테고리 로딩 실패:', err);
+        }
+
         const userId = await AsyncStorage.getItem('userId');
         const key = userId ? `recentSearches_${userId}` : 'recentSearches_guest';
         setIsLoggedIn(!!userId);
 
         const saved = await AsyncStorage.getItem(key);
         setRecentSearches(saved ? JSON.parse(saved) : []);
+        setSearchLoading(false);
 
         if (userId) {
           try {
@@ -124,9 +170,17 @@ const HomeScreen = () => {
         } else {
           setAlarmSettings([]);
         }
+        setAlarmLoading(false);
       })();
     }, [])
   );
+
+  const groupedByChoseong: Record<string, string[]> = pillCategories.reduce((acc, name) => {
+    const cho = getChoseong(name[0]);
+    if (!acc[cho]) acc[cho] = [];
+    acc[cho].push(name);
+    return acc;
+  }, {} as Record<string, string[]>);
 
   const saveSearch = async (keyword: string) => {
     const userId = await AsyncStorage.getItem('userId');
@@ -159,8 +213,6 @@ const HomeScreen = () => {
     { title: '즐겨찾기', icon: 'star-outline', screen: 'FavoritesScreen' },
   ];
 
-  const categories = ['소화제', '진통제', '항생제', '감기약'];
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -179,20 +231,42 @@ const HomeScreen = () => {
             }}
           />
 
-          <CategoryRow>
-            {categories.map((cat, index) => (
-              <CategoryButton
-                key={index}
-                onPress={() =>
-                  navigation.navigate('KeywordPillScreen' as never, {
-                    initialKeyword: cat,
-                  } as never)
-                }
+          <ChoseongScroll horizontal showsHorizontalScrollIndicator={false}>
+            {CHOSEONG_LIST.map((cho) => (
+              <ChoseongButton
+                key={cho}
+                onPress={() => setSelectedChoseong(cho === selectedChoseong ? null : cho)}
               >
-                <CategoryText>{cat}</CategoryText>
-              </CategoryButton>
+                <ChoseongText>{cho}</ChoseongText>
+              </ChoseongButton>
             ))}
-          </CategoryRow>
+          </ChoseongScroll>
+
+          {selectedChoseong && (
+            <>
+              {groupedByChoseong[selectedChoseong] &&
+              groupedByChoseong[selectedChoseong].length > 0 ? (
+                <CategoryRow>
+                  {groupedByChoseong[selectedChoseong].map((cat, index) => (
+                    <CategoryButton
+                      key={index}
+                      onPress={() =>
+                        navigation.navigate('KeywordPillScreen' as never, {
+                          initialKeyword: cat,
+                        } as never)
+                      }
+                    >
+                      <CategoryText>{cat}</CategoryText>
+                    </CategoryButton>
+                  ))}
+                </CategoryRow>
+              ) : (
+                <ListItem style={{ color: '#9ca3af', marginBottom: 12 }}>
+                  해당 초성으로 시작하는 분류가 없습니다.
+                </ListItem>
+              )}
+            </>
+          )}
 
           <FeatureButtonContainer>
             {featureButtons.map((btn, index) => (
@@ -217,10 +291,10 @@ const HomeScreen = () => {
 
           <Section>
             <SectionTitle>최근 검색 기록</SectionTitle>
-            {recentSearches.length === 0 ? (
-              <Card>
-                <ListItem>최근 검색어가 없습니다.</ListItem>
-              </Card>
+            {searchLoading ? (
+              <Card><ListItem>불러오는 중...</ListItem></Card>
+            ) : recentSearches.length === 0 ? (
+              <Card><ListItem>최근 검색어가 없습니다.</ListItem></Card>
             ) : (
               recentSearches.map((item, index) => (
                 <Card
@@ -245,14 +319,12 @@ const HomeScreen = () => {
 
           <Section>
             <SectionTitle>알림 설정</SectionTitle>
-            {!isLoggedIn ? (
-              <Card>
-                <ListItem>로그인 후 이용 가능한 기능입니다.</ListItem>
-              </Card>
+            {alarmLoading ? (
+              <Card><ListItem>불러오는 중...</ListItem></Card>
+            ) : !isLoggedIn ? (
+              <Card><ListItem>로그인 후 이용 가능한 기능입니다.</ListItem></Card>
             ) : alarmSettings.length === 0 ? (
-              <Card>
-                <ListItem>등록된 알림이 없습니다.</ListItem>
-              </Card>
+              <Card><ListItem>등록된 알림이 없습니다.</ListItem></Card>
             ) : (
               alarmSettings.map((item) => (
                 <Card key={item.id}>

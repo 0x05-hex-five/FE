@@ -8,6 +8,7 @@ import { FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { searchPills } from '../../api/pill';
 import { saveSearchKeyword } from '../../utils/recentSearch';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Container = styled.View`
   flex: 1;
@@ -18,6 +19,13 @@ const Container = styled.View`
 const Spacer = styled.View`
   height: 60px;
   background-color: transparent;
+`;
+
+const EmptyText = styled.Text`
+  text-align: center;
+  padding: 40px 0;
+  font-size: 14px;
+  color: #9ca3af;
 `;
 
 type Pill = {
@@ -31,6 +39,7 @@ type Pill = {
 const PillScreen = () => {
   const [filter, setFilter] = useState('전체');
   const [pills, setPills] = useState<Pill[]>([]);
+  const [loading, setLoading] = useState(true); 
   const navigation = useNavigation();
   const route = useRoute();
   const onSelect = (route.params as any)?.onSelect;
@@ -38,18 +47,21 @@ const PillScreen = () => {
   const [search, setSearch] = useState(initialKeyword);
 
   const typeParam =
-  filter === '전체' ? 'ALL' :
-  filter === '일반약' ? 'OTC' :
-  filter === '처방약' ? 'ETC' :
-  'ALL';
+    filter === '전체' ? 'ALL' :
+    filter === '일반약' ? 'OTC' :
+    filter === '처방약' ? 'ETC' :
+    'ALL';
 
   useEffect(() => {
     const fetchPills = async () => {
       try {
+        setLoading(true); 
         const result = await searchPills(search, typeParam);
         setPills(result);
       } catch (err) {
         console.error('의약품 검색 실패:', err);
+      } finally {
+        setLoading(false); 
       }
     };
 
@@ -77,12 +89,13 @@ const PillScreen = () => {
               className={item.className}
               type={item.type}
               image={item.image}
-              onPressDetail={() => {
+              onPressDetail={async () => {
                 if (onSelect) {
                   onSelect(item.name);
                   navigation.goBack();
                 } else {
-                  saveSearchKeyword(item.name);
+                  const userId = await AsyncStorage.getItem('userId');
+                  await saveSearchKeyword(item.name, userId); 
                   navigation.navigate('PillDetailScreen', { id: item.id });
                 }
               }}
@@ -90,7 +103,7 @@ const PillScreen = () => {
           )}
           ListEmptyComponent={
             <EmptyText>
-              검색 결과가 없습니다.
+              {loading ? '불러오는 중...' : '검색 결과가 없습니다.'}
             </EmptyText>
           }
         />
@@ -100,12 +113,5 @@ const PillScreen = () => {
     </>
   );
 };
-
-const EmptyText = styled.Text`
-  text-align: center;
-  padding: 40px 0;
-  font-size: 14px;
-  color: #9ca3af;
-`;
 
 export default PillScreen;
