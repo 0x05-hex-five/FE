@@ -1,10 +1,5 @@
-import React, { useState } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -136,44 +131,50 @@ const HomeScreen = () => {
   const [searchLoading, setSearchLoading] = useState(true);
   const [alarmLoading, setAlarmLoading] = useState(true);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      (async () => {
-        try {
-          const res = await axios.get('http://3.37.55.31:8080/api/medicines', {
-            params: { name: '', type: 'ALL' },
-          });
-          const allData = res.data.data || [];
-          const uniqueClasses = [...new Set(
-  allData.map((item: any) => item.className).filter((cls: unknown): cls is string => typeof cls === 'string')
-)] as string[];
-          setPillCategories(uniqueClasses);
-        } catch (err) {
-          console.error('카테고리 로딩 실패:', err);
-        }
+useFocusEffect(
+  React.useCallback(() => {
+    (async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      setIsLoggedIn(!!userId);
 
-        const userId = await AsyncStorage.getItem('userId');
-        const key = userId ? `recentSearches_${userId}` : 'recentSearches_guest';
-        setIsLoggedIn(!!userId);
-
-        const saved = await AsyncStorage.getItem(key);
-        setRecentSearches(saved ? JSON.parse(saved) : []);
+      if (!userId) {
+        setAlarmSettings([]);
+        setAlarmLoading(false); // ✅ 추가
         setSearchLoading(false);
+        return;
+      }
 
-        if (userId) {
-          try {
-            const res = await getNotifications();
-            setAlarmSettings(res.data);
-          } catch (err) {
-            console.error('알림 정보 조회 실패:', err);
-          }
-        } else {
-          setAlarmSettings([]);
-        }
-        setAlarmLoading(false);
-      })();
-    }, [])
-  );
+      // 알림 정보
+      try {
+        const res = await getNotifications();
+        setAlarmSettings(res.data);
+      } catch (err) {
+        console.error('알림 정보 조회 실패:', err);
+      } finally {
+        setAlarmLoading(false); // ✅ 무조건 false
+      }
+
+      // 카테고리 정보
+      try {
+        const res = await axios.get('http://3.37.55.31:8080/api/medicines', {
+          params: { name: '', type: 'ALL' },
+        });
+        const allData = res.data.data || [];
+        const uniqueClasses = [...new Set(
+          allData.map((item: any) => item.className).filter((cls: unknown): cls is string => typeof cls === 'string')
+        )] as string[];
+        setPillCategories(uniqueClasses);
+      } catch (err) {
+        console.error('카테고리 로딩 실패:', err);
+      }
+
+      const key = userId ? `recentSearches_${userId}` : 'recentSearches_guest';
+      const saved = await AsyncStorage.getItem(key);
+      setRecentSearches(saved ? JSON.parse(saved) : []);
+      setSearchLoading(false);
+    })();
+  }, [])
+);
 
   const groupedByChoseong: Record<string, string[]> = pillCategories.reduce((acc, name) => {
     const cho = getChoseong(name[0]);
@@ -212,6 +213,14 @@ const HomeScreen = () => {
     { title: '내 정보', icon: 'person-outline', screen: 'ProfileScreen' },
     { title: '즐겨찾기', icon: 'star-outline', screen: 'FavoritesScreen' },
   ];
+
+  const handleFeatureButtonPress = async (screen: string) => {
+    if (!isLoggedIn) {
+      Alert.alert('로그인 필요', '로그인 후 이용 가능한 기능입니다.');
+      return;
+    }
+    navigation.navigate(screen);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -270,19 +279,7 @@ const HomeScreen = () => {
 
           <FeatureButtonContainer>
             {featureButtons.map((btn, index) => (
-              <FeatureButton
-                key={index}
-                onPress={async () => {
-                  if (['ProfileScreen', 'FavoritesScreen'].includes(btn.screen)) {
-                    const userId = await AsyncStorage.getItem('userId');
-                    if (!userId) {
-                      Alert.alert('로그인 필요', '로그인 후 이용 가능한 기능입니다.');
-                      return;
-                    }
-                  }
-                  navigation.navigate(btn.screen as never);
-                }}
-              >
+              <FeatureButton key={index} onPress={() => handleFeatureButtonPress(btn.screen)}>
                 <Ionicons name={btn.icon} size={28} color="#3182ce" />
                 <FeatureText>{btn.title}</FeatureText>
               </FeatureButton>

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import {Alert } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import BottomTabBar from '../../components/UI/BottomTabBar';
-import { checkPillInteraction } from '../../api/pill'; 
+import { checkPillInteraction, searchPills } from '../../api/pill';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -106,70 +107,84 @@ const ResultScreen = () => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const fetchInteraction = async () => {
+  useEffect(() => {
+    const fetchInteraction = async () => {
+      try {
+        const res = await checkPillInteraction(id1, id2);
+        setResult(res || null);
+      } catch (err) {
+        console.error('병용금기 API 오류:', err);
+        setResult(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInteraction();
+  }, [id1, id2]);
+
+  const goToPillDetailByName = async (name: string) => {
     try {
-      const res = await checkPillInteraction(id1, id2);
-      setResult(res || null); 
+      const pills = await searchPills(name);
+      const pill = pills.find((p: any) => p.name === name) || pills[0];
+      if (pill?.id) {
+        navigation.navigate('PillDetailScreen', { id: pill.id });
+      } else {
+        Alert.alert('오류', `${name}의 상세 정보를 찾을 수 없습니다.`);
+      }
     } catch (err) {
-      console.error('병용금기 API 오류:', err);
-      setResult(null);
-    } finally {
-      setLoading(false);
+      Alert.alert('오류', '약품 정보를 불러오는 데 실패했습니다.');
     }
   };
 
-  fetchInteraction();
-}, [id1, id2]);
+  const renderResult = () => {
+    if (!result) {
+      return (
+        <AlertBox danger>
+          <AlertMessage danger>조합 확인이 어렵습니다. 다시 시도해주세요.</AlertMessage>
+        </AlertBox>
+      );
+    }
 
-const renderResult = () => {
-  if (!result) {
+    if (result.prohibit === true) {
+      return (
+        <>
+          <AlertBox danger>
+            <AlertMessage danger>이 약들은 함께 복용하면 안 됩니다.</AlertMessage>
+          </AlertBox>
+          {result.prohibitContent && (
+            <AlertBox danger>
+              <AlertMessage danger>사유: {result.prohibitContent}</AlertMessage>
+            </AlertBox>
+          )}
+        </>
+      );
+    }
+
     return (
-      <AlertBox danger>
-        <AlertMessage danger>조합 확인이 어렵습니다. 다시 시도해주세요.</AlertMessage>
+      <AlertBox>
+        <AlertMessage>이 약들은 함께 복용 가능합니다.</AlertMessage>
       </AlertBox>
     );
-  }
-
-  if (result.prohibit === true) {
-    return (
-      <>
-        <AlertBox danger>
-          <AlertMessage danger>이 약들은 함께 복용하면 안 됩니다.</AlertMessage>
-        </AlertBox>
-        {result.prohibitContent && (
-          <AlertBox danger>
-            <AlertMessage danger>사유: {result.prohibitContent}</AlertMessage>
-          </AlertBox>
-        )}
-      </>
-    );
-  }
-
-  return (
-    <AlertBox>
-      <AlertMessage>이 약들은 함께 복용 가능합니다.</AlertMessage>
-    </AlertBox>
-  );
-};
+  };
 
   if (loading) {
-  return (
-    <Container>
-      <Header>
-        <BackButton onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#1f2937" />
-        </BackButton>
-        <Title>약품 조합 결과</Title>
-      </Header>
+    return (
+      <Container>
+        <Header>
+          <BackButton onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={24} color="#1f2937" />
+          </BackButton>
+          <Title>약품 조합 결과</Title>
+        </Header>
 
-      <CenterBox style={{ flex: 1 }}>
-        <Ionicons name="hourglass-outline" size={32} color="#2563eb" />
-        <PillName style={{ marginTop: 8 }}>불러오는 중...</PillName>
-      </CenterBox>
-    </Container>
-  );
-}
+        <CenterBox style={{ flex: 1 }}>
+          <Ionicons name="hourglass-outline" size={32} color="#2563eb" />
+          <PillName style={{ marginTop: 8 }}>불러오는 중...</PillName>
+        </CenterBox>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -200,12 +215,12 @@ const renderResult = () => {
 
       {result && (
         <CenterBox>
-          <DetailButton onPress={() => navigation.navigate('PillDetailScreen', { name: result.itemName1 })}>
+          <DetailButton onPress={() => goToPillDetailByName(result.itemName1)}>
             <Ionicons name="information-circle-outline" size={16} color="#1f2937" />
             <DetailButtonText>{result.itemName1} 상세정보 보기</DetailButtonText>
           </DetailButton>
 
-          <DetailButton onPress={() => navigation.navigate('PillDetailScreen', { name: result.itemName2 })}>
+          <DetailButton onPress={() => goToPillDetailByName(result.itemName2)}>
             <Ionicons name="information-circle-outline" size={16} color="#1f2937" />
             <DetailButtonText>{result.itemName2} 상세정보 보기</DetailButtonText>
           </DetailButton>
