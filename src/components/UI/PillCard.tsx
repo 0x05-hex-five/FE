@@ -1,13 +1,14 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Image } from 'react-native';
+import { Image, Text } from 'react-native';
 
 interface PillCardProps {
   id: number;
   name: string;
   type: string;
-  className: string; 
+  className: string;
+  confidence?: number;
   image?: string | null;
   onPressDetail: () => void;
   onPressDelete?: () => void;
@@ -38,11 +39,18 @@ const PillMeta = styled.Text`
   color: #6b7280;
 `;
 
+const ConfidenceText = styled.Text`
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+`;
+
 const PillCard = ({
   name,
   className,
   type,
   image,
+  confidence,
   onPressDetail,
   onPressDelete,
   showDeleteIcon,
@@ -62,9 +70,13 @@ const PillCard = ({
           style={{ marginRight: 12 }}
         />
       )}
+
       <PillInfo>
         <PillName>{name}</PillName>
         <PillMeta>{className} / {type}</PillMeta>
+        {confidence !== undefined && (
+          <ConfidenceText>정확도: {(confidence * 100).toFixed(1)}%</ConfidenceText>
+        )}
       </PillInfo>
 
       {showDeleteIcon && onPressDelete ? (

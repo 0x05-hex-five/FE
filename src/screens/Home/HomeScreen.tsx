@@ -139,7 +139,7 @@ useFocusEffect(
 
       if (!userId) {
         setAlarmSettings([]);
-        setAlarmLoading(false); // ✅ 추가
+        setAlarmLoading(false); 
         setSearchLoading(false);
         return;
       }
@@ -151,7 +151,7 @@ useFocusEffect(
       } catch (err) {
         console.error('알림 정보 조회 실패:', err);
       } finally {
-        setAlarmLoading(false); // ✅ 무조건 false
+        setAlarmLoading(false); 
       }
 
       // 카테고리 정보

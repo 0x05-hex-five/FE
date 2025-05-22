@@ -76,6 +76,13 @@ const AlertMessage = styled.Text<{ danger?: boolean }>`
   color: ${({ danger }) => (danger ? '#b91c1c' : '#065f46')};
 `;
 
+const StyledImage = styled.Image`
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+`;
+
 const CenterBox = styled.View`
   align-items: center;
   justify-content: center;
@@ -107,21 +114,35 @@ const ResultScreen = () => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchInteraction = async () => {
-      try {
-        const res = await checkPillInteraction(id1, id2);
-        setResult(res || null);
-      } catch (err) {
-        console.error('병용금기 API 오류:', err);
-        setResult(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchInteraction = async () => {
+    try {
+      const res = await checkPillInteraction(id1, id2);
 
-    fetchInteraction();
-  }, [id1, id2]);
+      // 이미지 보완
+      const [pills1, pills2] = await Promise.all([
+        searchPills(res.itemName1),
+        searchPills(res.itemName2),
+      ]);
+
+      const pill1 = pills1.find((p: any) => p.name === res.itemName1) || pills1[0];
+      const pill2 = pills2.find((p: any) => p.name === res.itemName2) || pills2[0];
+
+      setResult({
+        ...res,
+        itemImage1: pill1?.image || null,
+        itemImage2: pill2?.image || null,
+      });
+    } catch (err) {
+      console.error('병용금기 API 오류:', err);
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchInteraction();
+}, [id1, id2]);
 
   const goToPillDetailByName = async (name: string) => {
     try {
@@ -196,15 +217,23 @@ const ResultScreen = () => {
       </Header>
 
       <Row>
-        <PillBox>
-          <Ionicons name="image" size={36} color="#9ca3af" style={{ marginBottom: 8 }} />
-          <PillName>{result?.itemName1 || '약품 1'}</PillName>
-        </PillBox>
+<PillBox>
+  {result?.itemImage1 ? (
+    <StyledImage source={{ uri: result.itemImage1 }} />
+  ) : (
+    <Ionicons name="image" size={36} color="#9ca3af" style={{ marginBottom: 8 }} />
+  )}
+  <PillName>{result?.itemName1 || '약품 1'}</PillName>
+</PillBox>
 
-        <PillBox>
-          <Ionicons name="image" size={36} color="#9ca3af" style={{ marginBottom: 8 }} />
-          <PillName>{result?.itemName2 || '약품 2'}</PillName>
-        </PillBox>
+<PillBox>
+  {result?.itemImage2 ? (
+    <StyledImage source={{ uri: result.itemImage2 }} />
+  ) : (
+    <Ionicons name="image" size={36} color="#9ca3af" style={{ marginBottom: 8 }} />
+  )}
+  <PillName>{result?.itemName2 || '약품 2'}</PillName>
+</PillBox>
       </Row>
 
       <PrimaryButton onPress={() => navigation.navigate('CombinationScreen')}>
