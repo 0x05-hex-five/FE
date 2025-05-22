@@ -1,21 +1,15 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   PermissionsAndroid,
   Platform,
-  View,
-  PanResponder,
-  Animated,
-  Dimensions,
 } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabBar from '../components/UI/BottomTabBar';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import ImageEditor from '@react-native-community/image-editor';
 import axios from 'axios';
-import ImagePicker from 'react-native-image-crop-picker'; // ✅ 추가
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -118,25 +112,6 @@ const NoticeText = styled.Text`
 const CameraScreen = () => {
   const navigation = useNavigation();
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [cropBox, setCropBox] = useState({ x: 50, y: 20, width: 100, height: 100 });
-  const cropBoxAnim = useRef(new Animated.ValueXY({ x: 50, y: 20 })).current;
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, gesture) => {
-        cropBoxAnim.setValue({ x: gesture.moveX - 60, y: gesture.moveY - 200 });
-      },
-      onPanResponderRelease: (_, gesture) => {
-        setCropBox({
-          x: gesture.moveX - 60,
-          y: gesture.moveY - 200,
-          width: 100,
-          height: 100,
-        });
-      },
-    })
-  ).current;
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -166,10 +141,7 @@ const CameraScreen = () => {
     }
 
     launchCamera(
-      {
-        mediaType: 'photo',
-        saveToPhotos: true,
-      },
+      { mediaType: 'photo', saveToPhotos: true },
       (response) => {
         const uri = response.assets?.[0]?.uri;
         if (uri) {
@@ -180,70 +152,45 @@ const CameraScreen = () => {
   };
 
   const handleGallery = () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-      },
-      (response) => {
-        const uri = response.assets?.[0]?.uri;
-        if (uri) {
-          setImageUri(uri);
-        }
+    launchImageLibrary({ mediaType: 'photo' }, (response) => {
+      const uri = response.assets?.[0]?.uri;
+      if (uri) {
+        setImageUri(uri);
       }
-    );
+    });
   };
 
-  const handleCrop = async () => {
-    if (!imageUri) return;
+const handleJustSend = async () => {
+  if (!imageUri) {
+    Alert.alert('에러', 'imageUri가 없습니다');
+    return;
+  }
 
-    try {
-      const cropped = await ImagePicker.openCropper({
-        path: imageUri,
-        width: 300,
-        height: 300,
-        mediaType: 'photo',
-      });
+  const formData = new FormData();
+  formData.append('image', {
+    uri: imageUri,
+    name: 'upload.jpg',
+    type: 'image/jpeg',
+  } as any);
 
-      setImageUri(cropped.path);
-      console.log('잘린 이미지:', cropped.path);
-    } catch (err) {
-      console.log('자르기 실패:', err);
-      Alert.alert('자르기 실패', '이미지 자르기에 실패했습니다.');
-    }
-  };
+  try {
+    const res = await fetch('http://3.37.55.31:8080/api/ai/recognitions', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
-  const handleCropAndSend = async () => {
-    if (!imageUri) return;
+    const result = await res.json();
+    console.log('✅ 서버 응답:', result);
+    navigation.navigate('SimilarPillScreen', { imageUri });
+  } catch (err) {
+    console.error('❌ 전송 실패:', err);
+    Alert.alert('업로드 실패');
+  }
+};
 
-    try {
-      const cropData = {
-        offset: { x: cropBox.x, y: cropBox.y },
-        size: { width: cropBox.width, height: cropBox.height },
-        displaySize: { width: cropBox.width, height: cropBox.height },
-        resizeMode: 'contain' as const,
-      };
-
-      const croppedUri = await ImageEditor.cropImage(imageUri, cropData);
-
-      const formData = new FormData();
-      formData.append('image', {
-        uri: croppedUri,
-        name: 'cropped.jpg',
-        type: 'image/jpeg',
-      } as any);
-
-      const response = await axios.post(
-        'http://3.37.55.31:8080/api/ai/recognitions',
-        formData,
-        //{ headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-
-      navigation.navigate('SimilarPillScreen', { imageUri: croppedUri });
-    } catch (err) {
-      console.error(err);
-      Alert.alert('오류', '이미지 전송 중 오류가 발생했습니다.');
-    }
-  };
 
   return (
     <Container>
@@ -256,9 +203,7 @@ const CameraScreen = () => {
 
       <CameraBox>
         {imageUri ? (
-          <>
-            <PreviewImage source={{ uri: imageUri }} resizeMode="cover" />
-          </>
+          <PreviewImage source={{ uri: imageUri }} resizeMode="cover" />
         ) : (
           <>
             <Ionicons name="camera-outline" size={36} color="#9ca3af" />
@@ -279,12 +224,7 @@ const CameraScreen = () => {
 
       {imageUri && (
         <>
-<OutlineButton onPress={handleCrop}>
-  <Ionicons name="crop" size={20} color="#1f2937" />
-  <ButtonText>이미지 자르기</ButtonText>
-</OutlineButton>
-
-          <InfoButton onPress={handleCropAndSend}>
+          <InfoButton onPress={handleJustSend}>
             <InfoButtonText>해당 약품 정보 알아보기</InfoButtonText>
           </InfoButton>
         </>
