@@ -9,7 +9,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabBar from '../components/UI/BottomTabBar';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import axios from 'axios';
+import ImagePicker from 'react-native-image-crop-picker'; 
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -191,6 +191,28 @@ const handleJustSend = async () => {
   }
 };
 
+const handleCrop = async () => {
+  if (!imageUri) {
+    Alert.alert('에러', '자를 이미지가 없습니다');
+    return;
+  }
+
+  try {
+    const cropped = await ImagePicker.openCropper({
+      path: imageUri,
+      width: 300, // 원하는 크기로 설정
+      height: 300,
+      cropping: true,
+      mediaType: 'photo',
+    });
+
+    setImageUri(cropped.path); // 잘린 이미지로 대체
+    console.log('잘린 이미지 경로:', cropped.path);
+  } catch (err) {
+    console.error('자르기 실패:', err);
+    Alert.alert('이미지 자르기 실패', '이미지를 자르는데 문제가 발생했습니다.');
+  }
+};
 
   return (
     <Container>
@@ -224,6 +246,11 @@ const handleJustSend = async () => {
 
       {imageUri && (
         <>
+              <OutlineButton onPress={handleCrop}>
+      <Ionicons name="crop" size={20} color="#1f2937" />
+      <ButtonText>이미지 자르기</ButtonText>
+    </OutlineButton>
+
           <InfoButton onPress={handleJustSend}>
             <InfoButtonText>해당 약품 정보 알아보기</InfoButtonText>
           </InfoButton>
