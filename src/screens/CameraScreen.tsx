@@ -183,10 +183,10 @@ const handleJustSend = async () => {
     });
 
     const result = await res.json();
-    console.log('✅ 서버 응답:', result);
+    console.log('서버 응답:', result);
     navigation.navigate('SimilarPillScreen', { imageUri });
   } catch (err) {
-    console.error('❌ 전송 실패:', err);
+    console.error('전송 실패:', err);
     Alert.alert('업로드 실패');
   }
 };
