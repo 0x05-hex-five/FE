@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { Alert, PermissionsAndroid, Platform } from 'react-native';
+import {
+  Alert,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import BottomTabBar from '../components/UI/BottomTabBar';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import ImagePicker from 'react-native-image-crop-picker'; 
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -47,6 +52,7 @@ const PreviewImage = styled.Image`
   width: 100%;
   height: 100%;
   border-radius: 12px;
+  position: absolute;
 `;
 
 const PrimaryButton = styled.TouchableOpacity`
@@ -66,6 +72,7 @@ const OutlineButton = styled.TouchableOpacity`
   align-items: center;
   flex-direction: row;
   justify-content: center;
+  margin-bottom: 12px;
 `;
 
 const ButtonText = styled.Text`
@@ -76,8 +83,7 @@ const ButtonText = styled.Text`
 `;
 
 const InfoButton = styled.TouchableOpacity`
-  margin-top: 12px;
-  background-color:rgb(22, 183, 129);
+  background-color: rgb(22, 183, 129);
   padding: 12px;
   border-radius: 8px;
   align-items: center;
@@ -135,46 +141,78 @@ const CameraScreen = () => {
     }
 
     launchCamera(
-      {
-        mediaType: 'photo',
-        saveToPhotos: true,
-      },
+      { mediaType: 'photo', saveToPhotos: true },
       (response) => {
-        if (response.didCancel) return;
-        if (response.errorCode) {
-          Alert.alert('카메라 오류', response.errorMessage || '');
-          return;
-        }
-
         const uri = response.assets?.[0]?.uri;
         if (uri) {
           setImageUri(uri);
-          console.log('📷 카메라 사진 URI:', uri);
         }
       }
     );
   };
 
   const handleGallery = () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-      },
-      (response) => {
-        if (response.didCancel) return;
-        if (response.errorCode) {
-          Alert.alert('갤러리 오류', response.errorMessage || '');
-          return;
-        }
-
-        const uri = response.assets?.[0]?.uri;
-        if (uri) {
-          setImageUri(uri);
-          console.log('🖼 갤러리 사진 URI:', uri);
-        }
+    launchImageLibrary({ mediaType: 'photo' }, (response) => {
+      const uri = response.assets?.[0]?.uri;
+      if (uri) {
+        setImageUri(uri);
       }
-    );
+    });
   };
+
+const handleJustSend = async () => {
+  if (!imageUri) {
+    Alert.alert('에러', 'imageUri가 없습니다');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('image', {
+    uri: imageUri,
+    name: 'upload.jpg',
+    type: 'image/jpeg',
+  } as any);
+
+  try {
+    const res = await fetch('http://3.37.55.31:8080/api/ai/recognitions', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const result = await res.json();
+    console.log('서버 응답:', result);
+    navigation.navigate('SimilarPillScreen', { imageUri });
+  } catch (err) {
+    console.error('전송 실패:', err);
+    Alert.alert('업로드 실패');
+  }
+};
+
+const handleCrop = async () => {
+  if (!imageUri) {
+    Alert.alert('에러', '자를 이미지가 없습니다');
+    return;
+  }
+
+  try {
+    const cropped = await ImagePicker.openCropper({
+      path: imageUri,
+      width: 300, // 원하는 크기로 설정
+      height: 300,
+      cropping: true,
+      mediaType: 'photo',
+    });
+
+    setImageUri(cropped.path); // 잘린 이미지로 대체
+    console.log('잘린 이미지 경로:', cropped.path);
+  } catch (err) {
+    console.error('자르기 실패:', err);
+    Alert.alert('이미지 자르기 실패', '이미지를 자르는데 문제가 발생했습니다.');
+  }
+};
 
   return (
     <Container>
@@ -207,13 +245,16 @@ const CameraScreen = () => {
       </OutlineButton>
 
       {imageUri && (
-        <InfoButton
-          onPress={() => {
-            navigation.navigate('SimilarPillScreen', { imageUri });
-          }}
-        >
-          <InfoButtonText>해당 약품 정보 알아보기</InfoButtonText>
-        </InfoButton>
+        <>
+              <OutlineButton onPress={handleCrop}>
+      <Ionicons name="crop" size={20} color="#1f2937" />
+      <ButtonText>이미지 자르기</ButtonText>
+    </OutlineButton>
+
+          <InfoButton onPress={handleJustSend}>
+            <InfoButtonText>해당 약품 정보 알아보기</InfoButtonText>
+          </InfoButton>
+        </>
       )}
 
       <NoticeBox>

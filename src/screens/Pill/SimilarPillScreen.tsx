@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
 import styled from 'styled-components/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PillCard from '../../components/UI/PillCard';
 import BottomTabBar from '../../components/UI/BottomTabBar';
-import { ScrollView } from 'react-native'; 
+import axios from 'axios';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -52,20 +52,36 @@ const SimilarPillScreen = () => {
 
   useEffect(() => {
     const fetchSimilarPills = async () => {
-      try {
-        // 여기에 실제 API 호출 추가 예정
-        // 예시 응답:
-        const mockData = [
-          { name: '타이레놀 500mg', category: '진통제 / 해열제', type: '일반' },
-          { name: '게보린', category: '진통제', type: '일반' },
-          { name: '판콜에이내복액', category: '감기약', type: '일반' },
-          { name: '이브퀵', category: '두통약', type: '일반' },
-          { name: '콜대원', category: '감기약', type: '일반' },
-        ];
+      const formData = new FormData();
+      formData.append('image', {
+        uri: imageUri,
+        name: 'pill.jpg',
+        type: 'image/jpeg',
+      } as any);
 
-        // 실제라면: await axios.post('/api/similar-pills', { imageUri })
-        setPills(mockData);
+      try {
+        const response = await axios.post(
+          'http://3.37.55.31:8080/api/ai/recognitions',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+
+        const result = response.data.data.map((item: any) => ({
+          id: item.medicine.id,
+          name: item.medicine.name,
+          className: item.medicine.className,
+          type: item.medicine.type,
+          image: item.medicine.image,
+          confidence: item.confidence,
+        }));
+
+        setPills(result);
       } catch (error) {
+        console.error(error);
         Alert.alert('불러오기 실패', '유사한 약품 정보를 가져오지 못했습니다.');
       } finally {
         setLoading(false);
@@ -78,35 +94,38 @@ const SimilarPillScreen = () => {
   return (
     <Container>
       <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
-      <Header>
-        <BackButton onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#1f2937" />
-        </BackButton>
-        <Title>유사한 약품 결과</Title>
-      </Header>
+        <Header>
+          <BackButton onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={24} color="#1f2937" />
+          </BackButton>
+          <Title>유사한 약품 결과</Title>
+        </Header>
 
-      {imageUri && <PreviewImage source={{ uri: imageUri }} resizeMode="cover" />}
+        {imageUri && <PreviewImage source={{ uri: imageUri }} resizeMode="cover" />}
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#2563eb" />
-      ) : (
-        <>
-          <TotalResultText>총 {pills.length}개의 결과</TotalResultText>
-          {pills.map((pill, index) => (
-            <PillCard
-              key={index}
-              name={pill.name}
-              category={pill.category}
-              type={pill.type}
-              onPressDetail={() => {
-                navigation.navigate('PillDetailScreen' as never);
-              }}
-            />
-          ))}
-        </>
-      )}
-    </ScrollView>
-    < BottomTabBar />
+        {loading ? (
+          <ActivityIndicator size="large" color="#2563eb" />
+        ) : (
+          <>
+            <TotalResultText>총 {pills.length}개의 결과</TotalResultText>
+            {pills.map((pill, index) => (
+              <PillCard
+                key={index}
+                id={pill.id}
+                name={pill.name}
+                className={pill.className}
+                type={pill.type}
+                image={pill.image}
+                confidence={pill.confidence}
+                onPressDetail={() => {
+                  navigation.navigate('PillDetailScreen', { id: pill.id });
+                }}
+              />
+            ))}
+          </>
+        )}
+      </ScrollView>
+      <BottomTabBar />
     </Container>
   );
 };

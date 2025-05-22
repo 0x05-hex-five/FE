@@ -145,6 +145,10 @@ const PillDetailScreen = () => {
     }
   };
 
+  const cleanText = (text: string) => {
+  return text?.replace(/&nbsp;/g, ' ').trim();
+};
+
   return (
     <Container>
       <Content>
@@ -186,29 +190,29 @@ const PillDetailScreen = () => {
             </PillHeader>
 
             <InfoCard title="효능·효과">
-              <PillTags>{pill.efficacy}</PillTags>
+              <PillTags>{cleanText(pill.efficacy)}</PillTags>
             </InfoCard>
             <InfoCard title="용법·용량">
-              <PillTags>{pill.useMethod}</PillTags>
+              <PillTags>{cleanText(pill.useMethod)}</PillTags>
             </InfoCard>
             {pill.storageMethod?.trim() && (
               <InfoCard title="보관방법">
-                <PillTags>{pill.storageMethod}</PillTags>
+                <PillTags>{cleanText(pill.storageMethod)}</PillTags>
               </InfoCard>
             )}
             {pill.precaution?.trim() && (
               <InfoCard title="주의사항">
-                <PillTags>{pill.precaution}</PillTags>
+                <PillTags>{cleanText(pill.precaution)}</PillTags>
               </InfoCard>
             )}
             {pill.sideEffect?.trim() && (
               <InfoCard title="부작용">
-                <PillTags>{pill.sideEffect}</PillTags>
+                <PillTags>{cleanText(pill.sideEffect)}</PillTags>
               </InfoCard>
             )}
             {pill.interaction?.trim() && (
               <InfoCard title="상호작용">
-                <PillTags>{pill.interaction}</PillTags>
+                <PillTags>{cleanText(pill.interaction)}</PillTags>
               </InfoCard>
             )}
           </>
